@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <title>Command Pad</title>
+  <rect width="128" height="128" rx="25" fill="#28538d"/>
+  <path d="M30 35l26 25-26 25M65 91h30" fill="none" stroke="#fff" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
