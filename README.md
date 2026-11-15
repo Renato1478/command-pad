@@ -10,20 +10,22 @@ Command Pad is a lightweight desktop library for saving command snippets and gro
 ## At a glance
 
 - **Save snippets** with a title and command text.
-- **Organize by category**, with command counts in the sidebar.
-- **Edit and move commands** between categories whenever you need to.
+- **Organize into collections**, with command counts in the sidebar.
+- **Star favorites** for quick access from the default view.
+- **Import and export collections** as JSON files.
+- **Edit and move commands** between collections whenever you need to.
 - **Keep data local** in a JSON file—no account or server required.
 - **Work across platforms** with Tauri's native desktop shell.
 
 ### Your command library
 
-![Command Pad library showing categories and saved commands](docs/images/library.png)
+![Command Pad library showing collections and favorite commands](docs/images/library.png)
 
 ### Edit a command
 
-![Command Pad edit dialog with title, command, and category fields](docs/images/edit-command.png)
+![Command Pad edit dialog with title, command, and collection fields](docs/images/edit-command.png)
 
-Screenshots show the browser preview with example data. The desktop app uses the same interface.
+Screenshots show the browser preview with example data.
 
 ## Download
 
@@ -63,7 +65,9 @@ The browser preview uses localStorage, separate from the desktop app.
 
 ## Data and privacy
 
-The desktop app stores `command_pad.json` in Tauri's application data directory. It starts with an empty library and doesn't automatically import data from the separate Iced project. Keep backups of that file if your snippets are important.
+The desktop app stores `command_pad.json` in Tauri's application data directory. It starts with an empty library and doesn't automatically import data from the separate Iced project. Existing categories are migrated to collections when loaded. Keep backups of that file if your snippets are important.
+
+Use the import button beside **Collections** to import a JSON collection. To export, select a named collection and choose **Export**. Each file contains one collection and its commands, including favorite status. Imports create a separate collection even when a collection with the same name already exists.
 
 Command Pad stores command text for reference; it **does not execute commands**.
 

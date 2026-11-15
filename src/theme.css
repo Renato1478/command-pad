@@ -1,0 +1,104 @@
+:root[data-theme="dark"] {
+  color: #e6edf7;
+  background: #101722;
+}
+
+:root[data-theme="dark"] .sidebar {
+  background: #182231;
+  border-color: #344256;
+}
+:root[data-theme="dark"] .sidebar-heading,
+:root[data-theme="dark"] .theme-control,
+:root[data-theme="dark"] .sidebar-footer {
+  color: #b3c2d6;
+}
+:root[data-theme="dark"] .icon-button,
+:root[data-theme="dark"] .favorite-button,
+:root[data-theme="dark"] .command-edit {
+  color: #b3c2d6;
+}
+:root[data-theme="dark"] .icon-button:hover,
+:root[data-theme="dark"] .category:hover {
+  color: #e6edf7;
+  background: #2b3a4e;
+}
+:root[data-theme="dark"] .category {
+  color: #d4dfed;
+}
+:root[data-theme="dark"] .category.selected {
+  color: #e3efff;
+  background: #254b7e;
+}
+:root[data-theme="dark"] .count {
+  color: #c6d5e8;
+  background: #35455a;
+}
+:root[data-theme="dark"] .selected .count {
+  color: #fff;
+  background: #38649b;
+}
+:root[data-theme="dark"] h1,
+:root[data-theme="dark"] .command-content strong,
+:root[data-theme="dark"] .dialog-title,
+:root[data-theme="dark"] .field {
+  color: #e6edf7;
+}
+:root[data-theme="dark"] .eyebrow,
+:root[data-theme="dark"] .subtitle,
+:root[data-theme="dark"] .command-content code,
+:root[data-theme="dark"] .empty-state p,
+:root[data-theme="dark"] .state-message,
+:root[data-theme="dark"] .dialog-description {
+  color: #b0c0d5;
+}
+:root[data-theme="dark"] .command-card,
+:root[data-theme="dark"] .dialog {
+  color: #e6edf7;
+  background: #1d2939;
+  border-color: #40516a;
+}
+:root[data-theme="dark"] .command-card:hover {
+  border-color: #8dbaff;
+}
+:root[data-theme="dark"] .secondary-button,
+:root[data-theme="dark"] .theme-control select,
+:root[data-theme="dark"] .field input,
+:root[data-theme="dark"] .field select {
+  color: #e6edf7;
+  background: #263549;
+  border-color: #536881;
+}
+:root[data-theme="dark"] .secondary-button:hover {
+  background: #354b65;
+}
+:root[data-theme="dark"] .field input::placeholder {
+  color: #aabbd0;
+}
+:root[data-theme="dark"] .favorite-button:hover {
+  background: #4a3a1e;
+}
+:root[data-theme="dark"] .favorite-button.is-favorite,
+:root[data-theme="dark"] .favorite-button:hover {
+  color: #ffcf70;
+}
+:root[data-theme="dark"] .empty-state {
+  border-color: #536881;
+}
+:root[data-theme="dark"] .empty-icon {
+  color: #b9d5ff;
+  background: #25436a;
+}
+:root[data-theme="dark"] .text-action {
+  color: #a2c9ff;
+}
+:root[data-theme="dark"] .error {
+  color: #ffd9d9;
+  background: #51282e;
+  border-color: #bc6a72;
+}
+:root[data-theme="dark"] .dialog-error {
+  color: #ffb8b8;
+}
+:root[data-theme="dark"] .dialog-actions {
+  border-color: #40516a;
+}

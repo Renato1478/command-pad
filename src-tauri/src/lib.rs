@@ -4,12 +4,13 @@ use tauri::Manager;
 
 #[derive(Debug, Default, Serialize, Deserialize)]
 struct Data {
-    categories: Vec<Category>,
+    #[serde(alias = "categories")]
+    collections: Vec<Collection>,
     commands: Vec<Command>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
-struct Category {
+struct Collection {
     id: String,
     name: String,
 }
@@ -19,7 +20,10 @@ struct Command {
     id: String,
     name: String,
     body: String,
-    category_id: Option<String>,
+    #[serde(alias = "category_id")]
+    collection_id: Option<String>,
+    #[serde(default)]
+    favorite: bool,
 }
 
 fn data_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -55,7 +59,28 @@ fn save_data(app: tauri::AppHandle, data: Data) -> Result<(), String> {
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_fs::init())
         .invoke_handler(tauri::generate_handler![load_data, save_data])
         .run(tauri::generate_context!())
         .expect("error while running Command Pad");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn loads_legacy_categories_and_preserves_commands() {
+        let data: Data = serde_json::from_str(
+            r#"{"categories":[{"id":"git","name":"Git"}],"commands":[{"id":"1","name":"Status","body":"git status","category_id":"git"}]}"#,
+        ).unwrap();
+        assert_eq!(data.collections[0].name, "Git");
+        assert_eq!(data.commands[0].collection_id.as_deref(), Some("git"));
+        assert!(!data.commands[0].favorite);
+        let json = serde_json::to_value(data).unwrap();
+        assert!(json.get("collections").is_some());
+        assert!(json.get("categories").is_none());
+        assert_eq!(json["commands"][0]["favorite"], false);
+    }
 }

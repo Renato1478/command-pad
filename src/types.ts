@@ -1,8 +1,9 @@
-export type Category = { id: string; name: string };
+export type Collection = { id: string; name: string };
 export type Command = {
   id: string;
   name: string;
   body: string;
-  category_id: string | null;
+  collection_id: string | null;
+  favorite: boolean;
 };
-export type Data = { categories: Category[]; commands: Command[] };
+export type Data = { collections: Collection[]; commands: Command[] };
