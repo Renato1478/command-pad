@@ -1,7 +1,8 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import type { FormEvent } from "react";
-import type { Collection, Command } from "../types";
+import { folderOptions } from "../folders";
+import type { Collection, Command, Folder } from "../types";
 
 export type Editor = { mode: "new" | "edit"; command: Command };
 
@@ -9,6 +10,7 @@ export function CommandDialog({
   editor,
   setEditor,
   collections,
+  folders,
   saving,
   error,
   onSubmit,
@@ -16,6 +18,7 @@ export function CommandDialog({
   editor: Editor | null;
   setEditor: (editor: Editor | null) => void;
   collections: Collection[];
+  folders: Folder[];
   saving: boolean;
   error: string;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -87,6 +90,7 @@ export function CommandDialog({
                       command: {
                         ...editor.command,
                         collection_id: event.target.value || null,
+                        folder_id: null,
                       },
                     })
                   }
@@ -97,6 +101,37 @@ export function CommandDialog({
                       {collection.name}
                     </option>
                   ))}
+                </select>
+              </label>
+              <label className="field">
+                Folder
+                <select
+                  value={editor.command.folder_id ?? ""}
+                  disabled={!editor.command.collection_id}
+                  onChange={(event) =>
+                    setEditor({
+                      ...editor,
+                      command: {
+                        ...editor.command,
+                        folder_id: event.target.value || null,
+                      },
+                    })
+                  }
+                >
+                  {editor.command.collection_id ? (
+                    folderOptions(folders, editor.command.collection_id).map(
+                      (option) => (
+                        <option
+                          value={option.id ?? ""}
+                          key={option.id ?? "root"}
+                        >
+                          {option.label}
+                        </option>
+                      ),
+                    )
+                  ) : (
+                    <option value="">No folder</option>
+                  )}
                 </select>
               </label>
               {error && (

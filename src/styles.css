@@ -231,6 +231,152 @@ h1 {
   flex-direction: column;
   gap: 12px;
 }
+
+.folder-tree {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.folder {
+  display: flex;
+  flex-direction: column;
+}
+.folder-row {
+  display: flex;
+  align-items: stretch;
+  min-height: 56px;
+  border: 1px solid #d6e0eb;
+  border-radius: 9px;
+  background: #fff;
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.folder-row:hover {
+  border-color: #92baf0;
+  box-shadow: 0 3px 12px #304b7010;
+}
+.folder-toggle {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 12px 8px 12px 14px;
+  border: 0;
+  background: transparent;
+  color: #273950;
+  text-align: left;
+}
+.folder-chevron {
+  flex: none;
+  color: #718096;
+  transition: transform 0.15s ease;
+}
+.folder-chevron.open {
+  transform: rotate(90deg);
+}
+.folder-name {
+  overflow: hidden;
+  color: #18263b;
+  font-size: 15px;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.folder-count {
+  margin-left: auto;
+  padding-left: 12px;
+  color: #718096;
+  font-size: 12px;
+  white-space: nowrap;
+}
+.folder-menu-trigger {
+  align-self: center;
+  margin-right: 8px;
+}
+.folder-children {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 8px 0 0 20px;
+  padding-left: 12px;
+  border-left: 1px solid #d6e0eb;
+}
+.folder-empty {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px dashed #d2deec;
+  border-radius: 8px;
+  color: #718096;
+  font-size: 13px;
+}
+.folder-empty > div {
+  display: flex;
+  gap: 12px;
+}
+.folder-menu {
+  z-index: 30;
+  min-width: 190px;
+  padding: 5px;
+  border: 1px solid #d6e0eb;
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 0 8px 24px #1b2f4b26;
+}
+.folder-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 10px;
+  border-radius: 5px;
+  color: #273950;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+.folder-menu-item[data-highlighted] {
+  background: #eaf2fe;
+}
+.folder-menu-item.danger {
+  color: #a02727;
+}
+.folder-menu-item.danger[data-highlighted] {
+  background: #fff0f0;
+}
+.folder-menu-separator {
+  height: 1px;
+  margin: 5px;
+  background: #e4eaf1;
+}
+.command-location {
+  overflow: hidden;
+  color: #8090a4;
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid #b42323;
+  border-radius: 7px;
+  background: #c92f2f;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+.danger-button:hover:not(:disabled) {
+  background: #a92525;
+}
+
 .command-card {
   display: flex;
   align-items: center;

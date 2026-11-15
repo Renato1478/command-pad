@@ -6,6 +6,8 @@ use tauri::Manager;
 struct Data {
     #[serde(alias = "categories")]
     collections: Vec<Collection>,
+    #[serde(default)]
+    folders: Vec<Folder>,
     commands: Vec<Command>,
 }
 
@@ -16,12 +18,22 @@ struct Collection {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+struct Folder {
+    id: String,
+    collection_id: String,
+    parent_id: Option<String>,
+    name: String,
+}
+
+#[derive(Debug, Serialize, Deserialize)]
 struct Command {
     id: String,
     name: String,
     body: String,
     #[serde(alias = "category_id")]
     collection_id: Option<String>,
+    #[serde(default)]
+    folder_id: Option<String>,
     #[serde(default)]
     favorite: bool,
 }
@@ -78,9 +90,33 @@ mod tests {
         assert_eq!(data.collections[0].name, "Git");
         assert_eq!(data.commands[0].collection_id.as_deref(), Some("git"));
         assert!(!data.commands[0].favorite);
+        assert!(data.folders.is_empty());
+        assert!(data.commands[0].folder_id.is_none());
         let json = serde_json::to_value(data).unwrap();
         assert!(json.get("collections").is_some());
         assert!(json.get("categories").is_none());
+        assert_eq!(json["folders"], serde_json::json!([]));
         assert_eq!(json["commands"][0]["favorite"], false);
+    }
+
+    #[test]
+    fn round_trips_nested_folders() {
+        let json = r#"{
+            "collections":[{"id":"git","name":"Git"}],
+            "folders":[
+                {"id":"utils","collection_id":"git","parent_id":null,"name":"Utils"},
+                {"id":"devops","collection_id":"git","parent_id":"utils","name":"Devops"}
+            ],
+            "commands":[
+                {"id":"1","name":"Deploy","body":"./deploy.sh","collection_id":"git","folder_id":"devops","favorite":true}
+            ]
+        }"#;
+        let data: Data = serde_json::from_str(json).unwrap();
+        assert_eq!(data.folders[1].parent_id.as_deref(), Some("utils"));
+        assert_eq!(data.commands[0].folder_id.as_deref(), Some("devops"));
+        let saved = serde_json::to_string(&data).unwrap();
+        let restored: Data = serde_json::from_str(&saved).unwrap();
+        assert_eq!(restored.folders.len(), 2);
+        assert_eq!(restored.commands[0].folder_id.as_deref(), Some("devops"));
     }
 }

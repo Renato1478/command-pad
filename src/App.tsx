@@ -1,4 +1,4 @@
-import { ChevronRight, Download, Plus, Star, Terminal } from "lucide-react";
+import { Download, FolderPlus, Plus, Star, Terminal } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -8,21 +8,36 @@ import {
   writeCollectionFile,
 } from "./collection-transfer";
 import { CollectionDialog } from "./components/CollectionDialog";
+import { CommandCard } from "./components/CommandCard";
 import type { Editor } from "./components/CommandDialog";
 import { CommandDialog } from "./components/CommandDialog";
+import { ConfirmDialog } from "./components/ConfirmDialog";
+import type { FolderEditor } from "./components/FolderDialog";
+import { FolderDialog } from "./components/FolderDialog";
+import { FolderTree } from "./components/FolderTree";
 import type { Selection } from "./components/Sidebar";
 import { Sidebar } from "./components/Sidebar";
+import {
+  commandLocation,
+  folderDeletionSummary,
+  folderPath,
+  sortByName,
+} from "./folders";
+import { addFolder, deleteFolderCascade, updateFolder } from "./library";
 import { loadData, saveData } from "./storage";
 import { useTheme } from "./theme";
-import type { Command, Data } from "./types";
+import type { Command, Data, Folder } from "./types";
 
 export function App() {
   const { preference, setPreference } = useTheme();
   const [data, setData] = useState<Data | null>(null);
   const [selection, setSelection] = useState<Selection>({ kind: "favorites" });
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [editor, setEditor] = useState<Editor | null>(null);
   const [collectionOpen, setCollectionOpen] = useState(false);
   const [collectionName, setCollectionName] = useState("");
+  const [folderEditor, setFolderEditor] = useState<FolderEditor | null>(null);
+  const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
   const saveInProgress = useRef(false);
@@ -65,6 +80,29 @@ export function App() {
     }
   }
 
+  function toggleFolder(folderId: string) {
+    setExpanded((previous) => {
+      const next = new Set(previous);
+      if (next.has(folderId)) next.delete(folderId);
+      else next.add(folderId);
+      return next;
+    });
+  }
+
+  function expandFolder(folderId: string | null) {
+    if (!folderId) return;
+    const current = dataRef.current;
+    if (!current) return;
+    const ids = folderPath(current.folders, folderId).map(
+      (folder) => folder.id,
+    );
+    setExpanded((previous) => {
+      const next = new Set(previous);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+  }
+
   async function submitCollection(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const name = collectionName.trim();
@@ -76,6 +114,102 @@ export function App() {
       setSelection({ kind: "collection", id: collection.id });
       setCollectionName("");
       setCollectionOpen(false);
+    }
+  }
+
+  function openNewCommand(folderId: string | null = null) {
+    const folder = folderId
+      ? data?.folders.find((item) => item.id === folderId)
+      : undefined;
+    const collectionId = folder
+      ? folder.collection_id
+      : selection.kind === "collection"
+        ? selection.id
+        : null;
+    setEditor({
+      mode: "new",
+      command: {
+        id: crypto.randomUUID(),
+        name: "",
+        body: "",
+        collection_id: collectionId,
+        folder_id: folderId,
+        favorite: selection.kind === "favorites",
+      },
+    });
+  }
+
+  function openNewFolder(parentId: string | null) {
+    const parent = parentId
+      ? data?.folders.find((item) => item.id === parentId)
+      : undefined;
+    const collectionId = parent
+      ? parent.collection_id
+      : selection.kind === "collection"
+        ? selection.id
+        : null;
+    if (!collectionId) return;
+    setFolderEditor({
+      mode: "create",
+      collectionId,
+      name: "",
+      parentId,
+    });
+  }
+
+  function editFolder(folder: Folder) {
+    setFolderEditor({
+      mode: "edit",
+      collectionId: folder.collection_id,
+      folderId: folder.id,
+      name: folder.name,
+      parentId: folder.parent_id,
+    });
+  }
+
+  async function submitFolder(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!folderEditor || !data) return;
+    const name = folderEditor.name.trim();
+    if (!name) return;
+    const folderId = folderEditor.folderId ?? crypto.randomUUID();
+    let next: Data;
+    try {
+      next =
+        folderEditor.mode === "create"
+          ? addFolder(data, {
+              id: folderId,
+              collection_id: folderEditor.collectionId,
+              parent_id: folderEditor.parentId,
+              name,
+            })
+          : updateFolder(
+              data,
+              folderEditor.folderId as string,
+              name,
+              folderEditor.parentId,
+            );
+    } catch (reason) {
+      setError(`Could not save folder: ${String(reason)}`);
+      return;
+    }
+    if (await persist(next)) {
+      setFolderEditor(null);
+      expandFolder(folderEditor.parentId);
+      if (folderEditor.mode === "create") expandFolder(folderId);
+    }
+  }
+
+  async function deleteFolder() {
+    if (!folderToDelete || !data) return;
+    const result = deleteFolderCascade(data, folderToDelete.id);
+    if (await persist(result.data)) {
+      setFolderToDelete(null);
+      setExpanded((previous) => {
+        const next = new Set(previous);
+        for (const id of result.removedFolderIds) next.delete(id);
+        return next;
+      });
     }
   }
 
@@ -95,7 +229,10 @@ export function App() {
         : data.commands.map((item) =>
             item.id === command.id ? command : item,
           );
-    if (await persist({ ...data, commands })) setEditor(null);
+    if (await persist({ ...data, commands })) {
+      expandFolder(command.folder_id);
+      setEditor(null);
+    }
   }
 
   async function toggleFavorite(command: Command) {
@@ -134,41 +271,66 @@ export function App() {
       setError("");
       await writeCollectionFile(
         collection.name,
-        exportCollection(collection, data.commands),
+        exportCollection(collection, data.folders, data.commands),
       );
     } catch (reason) {
       setError(`Could not export collection: ${String(reason)}`);
     }
   }
 
-  function openNewCommand() {
-    setEditor({
-      mode: "new",
-      command: {
-        id: crypto.randomUUID(),
-        name: "",
-        body: "",
-        collection_id: selection.kind === "collection" ? selection.id : null,
-        favorite: selection.kind === "favorites",
-      },
-    });
-  }
-
   const collections = data?.collections ?? [];
-  const selectedCollection =
-    selection.kind === "collection"
-      ? collections.find((item) => item.id === selection.id)
-      : undefined;
-  const commands =
-    data?.commands.filter((command) =>
-      selection.kind === "favorites"
-        ? command.favorite
-        : command.collection_id === selection.id,
-    ) ?? [];
-  const title =
-    selection.kind === "favorites"
-      ? "Favorites"
-      : (selectedCollection?.name ?? "No collection");
+  const activeCollectionId =
+    selection.kind === "collection" ? selection.id : null;
+  const selectedCollection = collections.find(
+    (item) => item.id === activeCollectionId,
+  );
+  const canManageFolders = activeCollectionId !== null;
+  const collectionFolders = activeCollectionId
+    ? (data?.folders.filter(
+        (folder) => folder.collection_id === activeCollectionId,
+      ) ?? [])
+    : [];
+  const collectionCommands = activeCollectionId
+    ? (data?.commands.filter(
+        (command) => command.collection_id === activeCollectionId,
+      ) ?? [])
+    : [];
+  const favorites = selection.kind === "favorites";
+  const flatCommands = favorites
+    ? sortByName(data?.commands.filter((command) => command.favorite) ?? [])
+    : sortByName(
+        data?.commands.filter((command) => command.collection_id === null) ??
+          [],
+      );
+  const commandCount = favorites
+    ? flatCommands.length
+    : activeCollectionId
+      ? collectionCommands.length
+      : flatCommands.length;
+  const title = favorites
+    ? "Favorites"
+    : (selectedCollection?.name ?? "No collection");
+  const isEmpty = favorites
+    ? commandCount === 0
+    : activeCollectionId
+      ? commandCount === 0 && collectionFolders.length === 0
+      : commandCount === 0;
+  const deletionSummary =
+    data && folderToDelete
+      ? folderDeletionSummary(data, folderToDelete.id)
+      : { commands: 0, folders: 0 };
+  const deletionParts = [
+    deletionSummary.commands > 0
+      ? `${deletionSummary.commands} ${
+          deletionSummary.commands === 1 ? "command" : "commands"
+        }`
+      : null,
+    deletionSummary.folders > 0
+      ? `${deletionSummary.folders} ${
+          deletionSummary.folders === 1 ? "subfolder" : "subfolders"
+        }`
+      : null,
+  ].filter(Boolean);
 
   return (
     <div className="flex min-h-screen">
@@ -188,7 +350,14 @@ export function App() {
             <div className="eyebrow">COMMAND LIBRARY</div>
             <h1>{title}</h1>
             <p className="subtitle">
-              {commands.length} {commands.length === 1 ? "command" : "commands"}
+              {commandCount} {commandCount === 1 ? "command" : "commands"}
+              {canManageFolders && (
+                <>
+                  {" · "}
+                  {collectionFolders.length}{" "}
+                  {collectionFolders.length === 1 ? "folder" : "folders"}
+                </>
+              )}
             </p>
           </div>
           <div className="header-actions">
@@ -202,11 +371,21 @@ export function App() {
                 <Download size={16} /> Export
               </button>
             )}
+            {canManageFolders && (
+              <button
+                type="button"
+                className="secondary-button"
+                disabled={!data || saving}
+                onClick={() => openNewFolder(null)}
+              >
+                <FolderPlus size={16} /> New folder
+              </button>
+            )}
             <button
               type="button"
               className="primary-button"
               disabled={!data || saving}
-              onClick={openNewCommand}
+              onClick={() => openNewCommand()}
             >
               <Plus size={19} /> New command
             </button>
@@ -220,72 +399,72 @@ export function App() {
         {!data && !error && (
           <p className="state-message">Loading your commands…</p>
         )}
-        {data && commands.length === 0 && (
+        {data && isEmpty && (
           <div className="empty-state">
             <div className="empty-icon">
-              {selection.kind === "favorites" ? (
-                <Star size={23} />
-              ) : (
-                <Terminal size={23} />
-              )}
+              {favorites ? <Star size={23} /> : <Terminal size={23} />}
             </div>
-            <h2>
-              {selection.kind === "favorites"
-                ? "No favorites yet"
-                : "No commands yet"}
-            </h2>
+            <h2>{favorites ? "No favorites yet" : "No commands yet"}</h2>
             <p>
-              {selection.kind === "favorites"
+              {favorites
                 ? "Star a command to find it here."
-                : "Add a command to get started."}
+                : canManageFolders
+                  ? "Add a command or create a folder to get started."
+                  : "Add a command to get started."}
             </p>
-            {selection.kind !== "favorites" && (
+            {!favorites && (
               <button
                 type="button"
                 className="text-action"
                 disabled={saving}
-                onClick={openNewCommand}
+                onClick={() => openNewCommand()}
               >
                 <Plus size={16} /> Add a command
               </button>
             )}
           </div>
         )}
-        <div className="flex flex-col gap-3">
-          {commands.map((command) => (
-            <div className="command-card" key={command.id}>
-              <button
-                type="button"
-                className={`favorite-button ${command.favorite ? "is-favorite" : ""}`}
-                aria-label={`${command.favorite ? "Remove" : "Add"} ${command.name} ${command.favorite ? "from" : "to"} favorites`}
-                aria-pressed={command.favorite}
-                disabled={saving}
-                onClick={() => toggleFavorite(command)}
-              >
-                <Star
-                  size={19}
-                  fill={command.favorite ? "currentColor" : "none"}
+        {data && !isEmpty && (
+          <div className="command-list">
+            {favorites || !activeCollectionId ? (
+              flatCommands.map((command) => (
+                <CommandCard
+                  key={command.id}
+                  command={command}
+                  location={
+                    favorites ? commandLocation(data, command) : undefined
+                  }
+                  onEdit={() => setEditor({ mode: "edit", command })}
+                  onToggleFavorite={() => toggleFavorite(command)}
+                  busy={saving}
                 />
-              </button>
-              <button
-                type="button"
-                className="command-edit"
-                onClick={() => setEditor({ mode: "edit", command })}
-              >
-                <span className="command-content">
-                  <strong>{command.name}</strong>
-                  <code>{command.body}</code>
-                </span>
-                <ChevronRight size={20} aria-hidden="true" />
-              </button>
-            </div>
-          ))}
-        </div>
+              ))
+            ) : (
+              <FolderTree
+                data={data}
+                collectionId={activeCollectionId}
+                parentId={null}
+                expanded={expanded}
+                onToggle={toggleFolder}
+                onEditCommand={(command) =>
+                  setEditor({ mode: "edit", command })
+                }
+                onToggleFavorite={toggleFavorite}
+                onAddCommand={(folderId) => openNewCommand(folderId)}
+                onAddFolder={(folderId) => openNewFolder(folderId)}
+                onEditFolder={editFolder}
+                onDeleteFolder={setFolderToDelete}
+                busy={saving}
+              />
+            )}
+          </div>
+        )}
       </main>
       <CommandDialog
         editor={editor}
         setEditor={setEditor}
         collections={collections}
+        folders={data?.folders ?? []}
         saving={saving}
         error={error}
         onSubmit={submitCommand}
@@ -298,6 +477,29 @@ export function App() {
         saving={saving}
         error={error}
         onSubmit={submitCollection}
+      />
+      <FolderDialog
+        editor={folderEditor}
+        setEditor={setFolderEditor}
+        collections={collections}
+        folders={data?.folders ?? []}
+        saving={saving}
+        error={error}
+        onSubmit={submitFolder}
+      />
+      <ConfirmDialog
+        open={!!folderToDelete}
+        title={`Delete “${folderToDelete?.name ?? "folder"}”?`}
+        description={
+          deletionParts.length === 0
+            ? "This folder is empty."
+            : `This permanently deletes ${deletionParts.join(" and ")}. This cannot be undone.`
+        }
+        confirmLabel="Delete folder"
+        onConfirm={deleteFolder}
+        onClose={() => setFolderToDelete(null)}
+        busy={saving}
+        error={error}
       />
     </div>
   );

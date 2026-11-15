@@ -2,7 +2,7 @@
 
 **Your frequently used commands, organized in one place.**
 
-Command Pad is a lightweight desktop library for saving command snippets and grouping them by category. It keeps your data on your computer and never runs your commands.
+Command Pad is a lightweight desktop library for saving command snippets and organizing them into collections and nested folders. It keeps your data on your computer and never runs your commands.
 
 [![Release](https://img.shields.io/github/v/release/Renato1478/command-pad?label=latest%20release)](https://github.com/Renato1478/command-pad/releases/latest)
 [![Release workflow](https://img.shields.io/github/actions/workflow/status/Renato1478/command-pad/release.yml?label=release%20build)](https://github.com/Renato1478/command-pad/actions/workflows/release.yml)
@@ -11,9 +11,10 @@ Command Pad is a lightweight desktop library for saving command snippets and gro
 
 - **Save snippets** with a title and command text.
 - **Organize into collections**, with command counts in the sidebar.
+- **Nest folders** inside collections and inside other folders.
 - **Star favorites** for quick access from the default view.
-- **Import and export collections** as JSON files.
-- **Edit and move commands** between collections whenever you need to.
+- **Import and export collections** as JSON files, including folder structure.
+- **Edit and move commands** between collections and folders.
 - **Keep data local** in a JSON file—no account or server required.
 - **Work across platforms** with Tauri's native desktop shell.
 
@@ -23,7 +24,13 @@ Command Pad is a lightweight desktop library for saving command snippets and gro
 
 ### Edit a command
 
-![Command Pad edit dialog with title, command, and collection fields](docs/images/edit-command.png)
+![Command Pad edit dialog with title, command, collection, and folder fields](docs/images/edit-command.png)
+
+### Organize with folders
+
+Folders appear in the command list as expandable rows. Use the folder menu to add a command, add a subfolder, rename or move the folder, or delete it. Deleting a folder also deletes everything inside it after confirmation.
+
+Commands and folders are sorted alphabetically at every level.
 
 Screenshots show the browser preview with example data.
 
@@ -65,9 +72,9 @@ The browser preview uses localStorage, separate from the desktop app.
 
 ## Data and privacy
 
-The desktop app stores `command_pad.json` in Tauri's application data directory. It starts with an empty library and doesn't automatically import data from the separate Iced project. Existing categories are migrated to collections when loaded. Keep backups of that file if your snippets are important.
+The desktop app stores `command_pad.json` in Tauri's application data directory. It starts with an empty library and doesn't automatically import data from the separate Iced project. Existing files are migrated automatically when loaded, including older category-based files. Keep backups of that file if your snippets are important.
 
-Use the import button beside **Collections** to import a JSON collection. To export, select a named collection and choose **Export**. Each file contains one collection and its commands, including favorite status. Imports create a separate collection even when a collection with the same name already exists.
+Use the import button beside **Collections** to import a JSON collection. To export, select a named collection and choose **Export**. Each file contains one collection, its folders, and its commands, including favorite status. Imports create a separate collection even when a collection with the same name already exists. Version 1 collection files without folders remain supported.
 
 Command Pad stores command text for reference; it **does not execute commands**.
 
