@@ -45,6 +45,9 @@ jobs:
             args: "--target x86_64-apple-darwin"
     runs-on: ${{ matrix.runner }}
     steps:
+      - name: Preserve LF line endings on Windows
+        if: matrix.runner == 'windows-latest'
+        run: git config --global core.autocrlf false
       - uses: actions/checkout@v4
       - name: Install Linux dependencies
         if: matrix.runner == 'ubuntu-22.04'
