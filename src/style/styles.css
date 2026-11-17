@@ -372,7 +372,6 @@ h1 {
   justify-content: space-between;
   width: 100%;
   min-height: 48px;
-  padding: 0 8px 0 8px;
   border-radius: 9px;
   color: #748398;
   text-align: left;
@@ -500,6 +499,9 @@ h1 {
 .small-dialog {
   width: min(440px, calc(100vw - 32px));
 }
+.command-dialog {
+  width: min(760px, calc(100vw - 32px));
+}
 .dialog-heading {
   display: flex;
   justify-content: space-between;
@@ -517,6 +519,93 @@ h1 {
   margin: 5px 0 0;
   color: #748398;
   font-size: 13px;
+}
+.command-dialog-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+.command-location-fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+}
+.command-textarea {
+  width: 100%;
+  min-height: 116px;
+  resize: vertical;
+  padding: 11px 12px;
+  border: 1px solid #d6e0eb;
+  border-radius: 6px;
+  background: #fff;
+  color: #1d2c40;
+  font:
+    400 14px / 1.5 ui-monospace,
+    monospace;
+}
+.command-textarea:focus-visible {
+  outline: 3px solid #7ab3ff;
+  outline-offset: 2px;
+}
+.code-block {
+  overflow: hidden;
+  border: 1px solid #40516a;
+  border-radius: 8px;
+  background: #15202e;
+}
+.code-block-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 38px;
+  padding: 4px 8px 4px 12px;
+  border-bottom: 1px solid #40516a;
+  color: #b0c0d5;
+  font-size: 12px;
+  font-weight: 600;
+}
+.code-block-title,
+.code-block-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.code-block-copy {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: inherit;
+}
+.code-block-copy:hover {
+  background: #354b65;
+}
+.code-block-copy[aria-pressed="true"] {
+  color: #fff;
+}
+.code-block-content {
+  max-height: min(45vh, 320px);
+  margin: 0;
+  padding: 14px;
+  overflow: auto;
+  color: #e6edf7;
+  font:
+    13px / 1.6 ui-monospace,
+    monospace;
+  white-space: pre;
+}
+.code-block-content.is-wrapped {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+@media (max-width: 480px) {
+  .command-location-fields {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
 }
 .field {
   display: flex;

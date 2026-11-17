@@ -58,6 +58,26 @@
   background: #1d2939;
   border-color: #40516a;
 }
+:root[data-theme="dark"] .command-textarea {
+  color: #e6edf7;
+  background: #263549;
+  border-color: #536881;
+}
+:root[data-theme="dark"] .code-block {
+  color: #e6edf7;
+  background: #15202e;
+  border-color: #40516a;
+}
+:root[data-theme="dark"] .code-block-header {
+  color: #b0c0d5;
+  border-color: #40516a;
+}
+:root[data-theme="dark"] .code-block-content {
+  color: #e6edf7;
+}
+:root[data-theme="dark"] .code-block-copy:hover {
+  background: #354b65;
+}
 :root[data-theme="dark"] .command-card:hover {
   background: #1d2939;
 }

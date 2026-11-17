@@ -102,7 +102,7 @@ test("favorites are the initial view and stars toggle without opening edit", asy
   expect(screen.queryByRole("dialog")).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Favorites, 1 command" }));
   expect(
-    screen.getByRole("button", { name: /Status.*git status.*Git/ }),
+    screen.getByRole("button", { name: /Status.*git status/ }),
   ).toBeTruthy();
   fireEvent.click(
     screen.getByRole("button", { name: "Remove Status from favorites" }),
@@ -228,6 +228,7 @@ test("moves a command into a folder from the editor", async () => {
   );
   fireEvent.click(screen.getByRole("button", { name: /Status.*git status/ }));
   const dialog = screen.getByRole("dialog");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Edit command" }));
   await userEvent.click(
     within(dialog).getByRole("combobox", { name: "Folder" }),
   );
@@ -235,10 +236,73 @@ test("moves a command into a folder from the editor", async () => {
   fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
   await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
   expect(save.mock.calls[0][0].commands[0].folder_id).toBe("utils");
+  fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
   expect(screen.getByRole("button", { name: "Utils, 1 command" })).toBeTruthy();
   expect(
     screen.getByRole("button", { name: /Status.*git status/ }),
   ).toBeTruthy();
+});
+
+test("views, copies, cancels and saves a multiline command", async () => {
+  const data = nestedLibrary();
+  data.commands[2].body = "echo first\n  echo second\n";
+  vi.spyOn(storage, "loadData").mockResolvedValue(data);
+  const save = vi.spyOn(storage, "saveData").mockResolvedValue();
+  const user = userEvent.setup();
+  const writeText = vi.spyOn(navigator.clipboard, "writeText");
+  render(<App />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Git, 3 commands" }),
+  );
+  fireEvent.click(screen.getByRole("button", { name: "Utils, 2 commands" }));
+  fireEvent.click(screen.getByRole("button", { name: "Devops, 1 command" }));
+  fireEvent.click(
+    screen.getByRole("button", { name: /Deploy staging.*echo first/ }),
+  );
+  const dialog = screen.getByRole("dialog", { name: "Deploy staging" });
+  expect(within(dialog).getByText("Git / Utils / Devops")).toBeTruthy();
+  expect(
+    within(dialog).getByRole("region", { name: "Command text" }).textContent,
+  ).toBe("echo first\n  echo second\n");
+  expect(within(dialog).queryByRole("textbox")).toBeNull();
+  const wrap = within(dialog).getByRole("button", { name: "Wrap lines" });
+  expect(wrap.getAttribute("aria-pressed")).toBe("false");
+  fireEvent.click(wrap);
+  expect(wrap.getAttribute("aria-pressed")).toBe("true");
+  expect(
+    within(dialog).getByRole("region", { name: "Command text" }).className,
+  ).toContain("is-wrapped");
+  fireEvent.click(wrap);
+  expect(wrap.getAttribute("aria-pressed")).toBe("false");
+  await user.click(
+    within(dialog).getByRole("button", { name: "Copy command" }),
+  );
+  expect(writeText).toHaveBeenCalledWith("echo first\n  echo second\n");
+  expect(await within(dialog).findByRole("status")).toHaveProperty(
+    "textContent",
+    "Copied",
+  );
+
+  fireEvent.click(within(dialog).getByRole("button", { name: "Edit command" }));
+  fireEvent.change(within(dialog).getByLabelText("Command"), {
+    target: { value: "changed\ncommand" },
+  });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  expect(
+    within(dialog).getByRole("region", { name: "Command text" }).textContent,
+  ).toBe("echo first\n  echo second\n");
+  expect(save).not.toHaveBeenCalled();
+
+  fireEvent.click(within(dialog).getByRole("button", { name: "Edit command" }));
+  fireEvent.change(within(dialog).getByLabelText("Command"), {
+    target: { value: "changed\ncommand" },
+  });
+  fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+  expect(save.mock.calls[0][0].commands[2].body).toBe("changed\ncommand");
+  expect(
+    await within(dialog).findByRole("region", { name: "Command text" }),
+  ).toHaveProperty("textContent", "changed\ncommand");
 });
 
 test("deletes a folder and its contents after confirmation", async () => {

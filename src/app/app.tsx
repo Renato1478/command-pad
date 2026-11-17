@@ -221,6 +221,7 @@ export function App() {
     event.preventDefault();
     if (
       !editor ||
+      editor.mode === "view" ||
       !data ||
       !editor.command.name.trim() ||
       !editor.command.body.trim()
@@ -235,7 +236,7 @@ export function App() {
           );
     if (await persist({ ...data, commands })) {
       expandFolder(command.folder_id);
-      setEditor(null);
+      setEditor(editor.mode === "edit" ? { mode: "view", command } : null);
     }
   }
 
@@ -435,10 +436,7 @@ export function App() {
                 <CommandCard
                   key={command.id}
                   command={command}
-                  location={
-                    favorites ? commandLocation(data, command) : undefined
-                  }
-                  onEdit={() => setEditor({ mode: "edit", command })}
+                  onEdit={() => setEditor({ mode: "view", command })}
                   onToggleFavorite={() => toggleFavorite(command)}
                   busy={saving}
                 />
@@ -451,7 +449,7 @@ export function App() {
                 expanded={expanded}
                 onToggle={toggleFolder}
                 onEditCommand={(command) =>
-                  setEditor({ mode: "edit", command })
+                  setEditor({ mode: "view", command })
                 }
                 onToggleFavorite={toggleFavorite}
                 onAddCommand={(folderId) => openNewCommand(folderId)}
@@ -472,6 +470,11 @@ export function App() {
         saving={saving}
         error={error}
         onSubmit={submitCommand}
+        location={
+          data && editor
+            ? commandLocation(data, editor.command)
+            : "No collection"
+        }
       />
       <CollectionDialog
         open={collectionOpen}
