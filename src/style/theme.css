@@ -168,3 +168,28 @@
 :root[data-theme="dark"] .folder-menu-separator {
   background: #40516a;
 }
+
+:root[data-theme="dark"] .workspace-picker {
+  border-color: #40516a;
+}
+:root[data-theme="dark"] .workspace-picker-control .ui-select-trigger {
+  color: #e6edf7;
+  background: #263549;
+  border-color: #536881;
+}
+:root[data-theme="dark"] .workspace-divider {
+  border-color: #40516a;
+}
+:root[data-theme="dark"] .workspace-or {
+  color: #93a5bc;
+  background: #1d2939;
+}
+:root[data-theme="dark"] .workspace-link-action {
+  color: #e6edf7;
+}
+:root[data-theme="dark"] .workspace-link-action:hover:not(:disabled) {
+  background: #2b3a4e;
+}
+:root[data-theme="dark"] .workspace-picker-label {
+  color: #b0c0d5;
+}

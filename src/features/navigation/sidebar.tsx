@@ -1,4 +1,14 @@
-import { Monitor, Plus, Star, Terminal, Upload } from "lucide-react";
+import * as DropdownMenu from "@radix-ui/react-dropdown-menu";
+import {
+  Monitor,
+  MoreHorizontal,
+  Pencil,
+  Plus,
+  Star,
+  Terminal,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import { SelectField } from "../../components/ui/select";
 import type { ThemePreference } from "../../style/theme";
 import type { Data } from "../../types";
@@ -16,6 +26,12 @@ export function Sidebar({
   theme,
   onThemeChange,
   busy,
+  workspaces,
+  activeWorkspaceId,
+  onWorkspaceChange,
+  onNewWorkspace,
+  onRenameWorkspace,
+  onDeleteWorkspace,
 }: {
   data: Data | null;
   selection: Selection;
@@ -25,6 +41,12 @@ export function Sidebar({
   theme: ThemePreference;
   onThemeChange: (theme: ThemePreference) => void;
   busy: boolean;
+  workspaces: { id: string; name: string }[];
+  activeWorkspaceId: string;
+  onWorkspaceChange: (id: string) => void;
+  onNewWorkspace: () => void;
+  onRenameWorkspace: () => void;
+  onDeleteWorkspace: () => void;
 }) {
   const countFor = (id: string | null) =>
     data?.commands.filter((command) => command.collection_id === id).length ??
@@ -33,6 +55,61 @@ export function Sidebar({
     data?.commands.filter((command) => command.favorite).length ?? 0;
   return (
     <aside className="sidebar">
+      <div className="workspace-picker">
+        <span className="workspace-picker-label">Workspace</span>
+        <div className="workspace-picker-control">
+          <SelectField
+            label="Workspace"
+            value={activeWorkspaceId}
+            onValueChange={onWorkspaceChange}
+            options={workspaces.map((workspace) => ({
+              value: workspace.id,
+              label: workspace.name,
+            }))}
+          />
+          <DropdownMenu.Root>
+            <DropdownMenu.Trigger asChild>
+              <button
+                type="button"
+                className="icon-button"
+                aria-label="Workspace actions"
+                title="Workspace actions"
+              >
+                <MoreHorizontal size={18} />
+              </button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Portal>
+              <DropdownMenu.Content
+                className="folder-menu"
+                align="end"
+                sideOffset={4}
+              >
+                <DropdownMenu.Item
+                  className="folder-menu-item"
+                  onSelect={onNewWorkspace}
+                >
+                  <Plus size={16} /> New workspace
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  className="folder-menu-item"
+                  disabled={activeWorkspaceId === "default"}
+                  onSelect={onRenameWorkspace}
+                >
+                  <Pencil size={16} /> Edit name
+                </DropdownMenu.Item>
+                <DropdownMenu.Separator className="folder-menu-separator" />
+                <DropdownMenu.Item
+                  className="folder-menu-item danger"
+                  disabled={activeWorkspaceId === "default"}
+                  onSelect={onDeleteWorkspace}
+                >
+                  <Trash2 size={16} /> Delete
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu.Portal>
+          </DropdownMenu.Root>
+        </div>
+      </div>
       <nav aria-label="Library">
         <button
           type="button"

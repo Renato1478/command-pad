@@ -30,9 +30,29 @@ import {
 } from "../features/folders/queries";
 import type { Selection } from "../features/navigation/sidebar";
 import { Sidebar } from "../features/navigation/sidebar";
+import {
+  RenameWorkspaceDialog,
+  WorkspaceDialog,
+} from "../features/workspaces/workspace-dialog";
 import { loadData, saveData } from "../storage";
 import { useTheme } from "../style/theme";
 import type { Collection, Command, Data, Folder } from "../types";
+import type { CommandRevisions, WorkspaceRecord } from "../workspace-storage";
+import {
+  chooseWorkspaceDirectory,
+  createLocalWorkspace,
+  createWorkspace,
+  DEFAULT_WORKSPACE_ID,
+  loadWorkspaceRecords,
+  openWorkspace,
+  readWorkspace,
+  rememberWorkspace,
+  removeWorkspaceRecord,
+  renameWorkspace,
+  saveWorkspace,
+  updateWorkspaceRecord,
+  workspaceRevisions,
+} from "../workspace-storage";
 
 export function App() {
   const { preference, setPreference } = useTheme();
@@ -48,26 +68,106 @@ export function App() {
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [workspaceRecords, setWorkspaceRecords] = useState<WorkspaceRecord[]>(
+    () => loadWorkspaceRecords(),
+  );
+  const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(
+    () =>
+      localStorage.getItem("command-pad-active-workspace") ??
+      DEFAULT_WORKSPACE_ID,
+  );
+  const [workspaceDialogOpen, setWorkspaceDialogOpen] = useState(false);
+  const [workspaceName, setWorkspaceName] = useState("");
+  const [workspaceError, setWorkspaceError] = useState("");
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [renameName, setRenameName] = useState("");
+  const [renameError, setRenameError] = useState("");
+  const [workspaceToDelete, setWorkspaceToDelete] =
+    useState<WorkspaceRecord | null>(null);
   const saveInProgress = useRef(false);
   const dataRef = useRef<Data | null>(null);
+  const revisionsRef = useRef<CommandRevisions>({});
+  const activeWorkspace =
+    activeWorkspaceId === DEFAULT_WORKSPACE_ID
+      ? null
+      : workspaceRecords.find((item) => item.id === activeWorkspaceId);
 
   useEffect(() => {
     let active = true;
-    loadData().then(
-      (loaded) => {
+    const record =
+      activeWorkspaceId === DEFAULT_WORKSPACE_ID
+        ? null
+        : loadWorkspaceRecords().find((item) => item.id === activeWorkspaceId);
+    if (activeWorkspaceId !== DEFAULT_WORKSPACE_ID && !record) {
+      // The remembered workspace was removed from this device.
+      localStorage.setItem(
+        "command-pad-active-workspace",
+        DEFAULT_WORKSPACE_ID,
+      );
+      setActiveWorkspaceId(DEFAULT_WORKSPACE_ID);
+      return;
+    }
+    const load = record
+      ? Promise.all([
+          readWorkspace(record.path),
+          workspaceRevisions(record.path),
+        ])
+      : loadData().then((loaded) => [loaded, {}] as const);
+    load.then(
+      ([loaded, revisions]) => {
         if (active) {
           dataRef.current = loaded;
+          revisionsRef.current = revisions;
           setData(loaded);
         }
       },
       (reason: unknown) => {
-        if (active) setError(`Could not load your data: ${String(reason)}`);
+        if (active) {
+          setError(`Could not load your data: ${String(reason)}`);
+          setData(null);
+        }
       },
     );
     return () => {
       active = false;
     };
-  }, []);
+  }, [activeWorkspaceId]);
+
+  const workspacePath = activeWorkspace?.path;
+
+  // Network directories do not reliably emit filesystem events on every
+  // platform, so reconcile periodically as well as when the window is focused.
+  useEffect(() => {
+    if (!workspacePath) return;
+    const path: string = workspacePath;
+    let cancelled = false;
+    async function refresh() {
+      if (saveInProgress.current) return;
+      try {
+        const [loaded, revisions] = await Promise.all([
+          readWorkspace(path),
+          workspaceRevisions(path),
+        ]);
+        if (cancelled) return;
+        revisionsRef.current = revisions;
+        if (JSON.stringify(loaded) !== JSON.stringify(dataRef.current)) {
+          dataRef.current = loaded;
+          setData(loaded);
+        }
+      } catch (reason) {
+        if (!cancelled) {
+          setError(`Could not refresh the workspace: ${String(reason)}`);
+        }
+      }
+    }
+    const interval = window.setInterval(refresh, 5000);
+    window.addEventListener("focus", refresh);
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+    };
+  }, [workspacePath]);
 
   async function persist(next: Data): Promise<boolean> {
     if (saveInProgress.current) return false;
@@ -75,17 +175,137 @@ export function App() {
     setSaving(true);
     setError("");
     try {
-      await saveData(next);
+      const previous = dataRef.current;
+      if (activeWorkspace) {
+        if (!previous) return false;
+        await saveWorkspace(
+          activeWorkspace.path,
+          previous,
+          next,
+          revisionsRef.current,
+        );
+        revisionsRef.current = await workspaceRevisions(activeWorkspace.path);
+      } else {
+        await saveData(next);
+      }
       dataRef.current = next;
       setData(next);
       return true;
     } catch (reason) {
       setError(`Could not save your changes: ${String(reason)}`);
+      // Pick up the current fingerprints so the user can resolve a conflict
+      // without waiting for the next workspace poll.
+      if (activeWorkspace) {
+        try {
+          revisionsRef.current = await workspaceRevisions(activeWorkspace.path);
+        } catch {
+          // Keep the original save error as the actionable message.
+        }
+      }
       return false;
     } finally {
       saveInProgress.current = false;
       setSaving(false);
     }
+  }
+
+  async function switchWorkspace(id: string) {
+    if (id === activeWorkspaceId) return;
+    const record = workspaceRecords.find((item) => item.id === id);
+    if (id !== DEFAULT_WORKSPACE_ID && !record) return;
+    setError("");
+    setData(null);
+    revisionsRef.current = {};
+    setActiveWorkspaceId(id);
+    localStorage.setItem("command-pad-active-workspace", id);
+    setSelection({ kind: "favorites" });
+    setExpanded(new Set());
+  }
+
+  async function createWorkspaceFromName(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = workspaceName.trim();
+    if (!name) return;
+    setWorkspaceError("");
+    setSaving(true);
+    try {
+      const record = await createLocalWorkspace(name);
+      setWorkspaceRecords(rememberWorkspace(record));
+      setWorkspaceDialogOpen(false);
+      setWorkspaceName("");
+      await switchWorkspace(record.id);
+    } catch (reason) {
+      setWorkspaceError(String(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function createWorkspaceInFolder() {
+    const name = workspaceName.trim();
+    if (!name) {
+      setWorkspaceError("Enter a workspace name first.");
+      return;
+    }
+    setWorkspaceError("");
+    setSaving(true);
+    try {
+      const path = await chooseWorkspaceDirectory();
+      if (!path) return;
+      const record = await createWorkspace(path, name);
+      setWorkspaceRecords(rememberWorkspace(record));
+      setWorkspaceDialogOpen(false);
+      setWorkspaceName("");
+      await switchWorkspace(record.id);
+    } catch (reason) {
+      setWorkspaceError(String(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function openExistingWorkspace() {
+    setWorkspaceError("");
+    setSaving(true);
+    try {
+      const path = await chooseWorkspaceDirectory();
+      if (!path) return;
+      const opened = await openWorkspace(path);
+      setWorkspaceRecords(rememberWorkspace(opened.record));
+      setWorkspaceDialogOpen(false);
+      await switchWorkspace(opened.record.id);
+    } catch (reason) {
+      setWorkspaceError(String(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function submitWorkspaceRename(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const name = renameName.trim();
+    if (!name || !activeWorkspace) return;
+    setRenameError("");
+    setSaving(true);
+    try {
+      await renameWorkspace(activeWorkspace.path, name);
+      const updated = { ...activeWorkspace, name };
+      setWorkspaceRecords(updateWorkspaceRecord(updated));
+      setRenameDialogOpen(false);
+    } catch (reason) {
+      setRenameError(String(reason));
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  function deleteWorkspace() {
+    if (!workspaceToDelete) return;
+    setWorkspaceRecords(removeWorkspaceRecord(workspaceToDelete.id));
+    if (activeWorkspaceId === workspaceToDelete.id) {
+      void switchWorkspace(DEFAULT_WORKSPACE_ID);
+    }
+    setWorkspaceToDelete(null);
   }
 
   function toggleFolder(folderId: string) {
@@ -376,6 +596,26 @@ export function App() {
         theme={preference}
         onThemeChange={setPreference}
         busy={saving}
+        workspaces={[
+          { id: DEFAULT_WORKSPACE_ID, name: "Default" },
+          ...workspaceRecords,
+        ]}
+        activeWorkspaceId={activeWorkspaceId}
+        onWorkspaceChange={(id) => void switchWorkspace(id)}
+        onNewWorkspace={() => {
+          setWorkspaceError("");
+          setWorkspaceDialogOpen(true);
+        }}
+        onRenameWorkspace={() => {
+          if (!activeWorkspace) return;
+          setRenameName(activeWorkspace.name);
+          setRenameError("");
+          setRenameDialogOpen(true);
+        }}
+        onDeleteWorkspace={() => {
+          if (!activeWorkspace) return;
+          setWorkspaceToDelete(activeWorkspace);
+        }}
       />
       <main className="main">
         <header className="main-header">
@@ -493,6 +733,36 @@ export function App() {
             ? commandLocation(data, editor.command)
             : "No collection"
         }
+      />
+      <WorkspaceDialog
+        open={workspaceDialogOpen}
+        setOpen={setWorkspaceDialogOpen}
+        name={workspaceName}
+        setName={setWorkspaceName}
+        onCreate={createWorkspaceFromName}
+        onCreateInFolder={createWorkspaceInFolder}
+        onOpenExisting={openExistingWorkspace}
+        saving={saving}
+        error={workspaceError}
+      />
+      <RenameWorkspaceDialog
+        open={renameDialogOpen}
+        setOpen={setRenameDialogOpen}
+        name={renameName}
+        setName={setRenameName}
+        onSubmit={submitWorkspaceRename}
+        saving={saving}
+        error={renameError}
+      />
+      <ConfirmDialog
+        open={!!workspaceToDelete}
+        title={`Delete “${workspaceToDelete?.name ?? "workspace"}”?`}
+        description="This removes the workspace from this device. Files in the workspace folder are not deleted."
+        confirmLabel="Delete workspace"
+        onConfirm={deleteWorkspace}
+        onClose={() => setWorkspaceToDelete(null)}
+        busy={false}
+        error={workspaceError}
       />
       <CollectionDialog
         open={collectionOpen}

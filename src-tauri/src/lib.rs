@@ -2,40 +2,43 @@ use serde::{Deserialize, Serialize};
 use std::{fs, io::ErrorKind, path::PathBuf};
 use tauri::Manager;
 
-#[derive(Debug, Default, Serialize, Deserialize)]
-struct Data {
+pub mod workspace;
+pub mod workspace_format;
+
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Data {
     #[serde(alias = "categories")]
-    collections: Vec<Collection>,
+    pub collections: Vec<Collection>,
     #[serde(default)]
-    folders: Vec<Folder>,
-    commands: Vec<Command>,
+    pub folders: Vec<Folder>,
+    pub commands: Vec<Command>,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Collection {
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Collection {
     id: String,
     name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Folder {
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Folder {
     id: String,
     collection_id: String,
     parent_id: Option<String>,
     name: String,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-struct Command {
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct Command {
     id: String,
     name: String,
     body: String,
     #[serde(alias = "category_id")]
-    collection_id: Option<String>,
+    pub collection_id: Option<String>,
     #[serde(default)]
-    folder_id: Option<String>,
+    pub folder_id: Option<String>,
     #[serde(default)]
-    favorite: bool,
+    pub favorite: bool,
 }
 
 fn data_path(app: &tauri::AppHandle) -> Result<PathBuf, String> {
@@ -73,7 +76,26 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
-        .invoke_handler(tauri::generate_handler![load_data, save_data])
+        .invoke_handler(tauri::generate_handler![
+            load_data,
+            save_data,
+            workspace::commands::create_local_workspace,
+            workspace::commands::create_workspace_files,
+            workspace::commands::open_workspace_files,
+            workspace::commands::rename_workspace_files,
+            workspace::commands::load_workspace,
+            workspace::commands::workspace_revisions,
+            workspace::commands::add_workspace_collection,
+            workspace::commands::rename_workspace_collection,
+            workspace::commands::delete_workspace_collection,
+            workspace::commands::add_workspace_folder,
+            workspace::commands::update_workspace_folder,
+            workspace::commands::delete_workspace_folder,
+            workspace::commands::add_workspace_command,
+            workspace::commands::update_workspace_command,
+            workspace::commands::delete_workspace_command,
+            workspace::commands::validate_workspace_name,
+        ])
         .run(tauri::generate_context!())
         .expect("error while running Command Pad");
 }

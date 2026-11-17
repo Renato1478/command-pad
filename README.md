@@ -78,6 +78,22 @@ Use the import button beside **Collections** to import a JSON collection. To exp
 
 Command Pad stores command text for reference; it **does not execute commands**.
 
+### Filesystem workspaces
+
+Use the workspace selector at the top of the sidebar to manage libraries. You can create a workspace automatically in the app data directory, create one in a chosen folder such as a mounted network share, or open an existing workspace. A workspace contains real directories and one Markdown file per command:
+
+```text
+team-workspace/
+├── .cmdpad/workspace.json
+├── collections/
+│   └── Git/
+│       ├── .collection.json
+│       └── Status.cmd.md
+└── unfiled/
+```
+
+Collections and folders are directories; command names are filenames. Only files ending in `.cmd.md` with valid CmdPad metadata are recognized. Other files are left alone. Workspaces refresh automatically, and edits check the command file for external changes before saving. **Default (this device)** is the original JSON library and is not converted automatically.
+
 ## Stack
 
 Built with [Tauri 2](https://tauri.app/), [React](https://react.dev/), [TanStack Router](https://tanstack.com/router), [Tailwind CSS](https://tailwindcss.com/), and [Biome](https://biomejs.dev/).
