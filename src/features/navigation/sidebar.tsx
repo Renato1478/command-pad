@@ -1,4 +1,4 @@
-import { FolderPlus, Monitor, Star, Terminal, Upload } from "lucide-react";
+import { Monitor, Plus, Star, Terminal, Upload } from "lucide-react";
 import { SelectField } from "../../components/ui/select";
 import type { ThemePreference } from "../../style/theme";
 import type { Data } from "../../types";
@@ -69,7 +69,7 @@ export function Sidebar({
             disabled={!data || busy}
             onClick={onCreate}
           >
-            <FolderPlus size={18} />
+            <Plus size={18} />
           </button>
         </div>
       </div>
