@@ -1,4 +1,5 @@
 import { FolderPlus, Monitor, Star, Terminal, Upload } from "lucide-react";
+import { SelectField } from "../../components/ui/select";
 import type { ThemePreference } from "../../style/theme";
 import type { Data } from "../../types";
 
@@ -98,22 +99,22 @@ export function Sidebar({
         })}
       </nav>
       <div className="sidebar-bottom">
-        <label className="theme-control">
+        <div className="theme-control">
           <span>
             <Monitor size={15} aria-hidden="true" /> Appearance
           </span>
-          <select
-            aria-label="Appearance"
+          <SelectField
+            label="Appearance"
+            className="theme-select"
             value={theme}
-            onChange={(event) =>
-              onThemeChange(event.target.value as ThemePreference)
-            }
-          >
-            <option value="system">System</option>
-            <option value="light">Light</option>
-            <option value="dark">Dark</option>
-          </select>
-        </label>
+            onValueChange={(value) => onThemeChange(value as ThemePreference)}
+            options={[
+              { value: "system", label: "System" },
+              { value: "light", label: "Light" },
+              { value: "dark", label: "Dark" },
+            ]}
+          />
+        </div>
         <div className="sidebar-footer">
           <Terminal size={15} />
           <span>YOUR COMMAND LIBRARY</span>

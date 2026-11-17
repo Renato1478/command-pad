@@ -299,7 +299,6 @@ h1 {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 16px;
-  border: 1px dashed #d2deec;
   border-radius: 8px;
   color: #718096;
   font-size: 13px;
@@ -528,8 +527,24 @@ h1 {
   font-size: 13px;
   font-weight: 700;
 }
-.field input,
-.field select {
+.ui-input,
+.ui-select-trigger {
+  border: 1px solid #d6e0eb;
+}
+.ui-select-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+}
+.ui-select-trigger [data-slot="select-value"] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ui-input,
+.field .ui-select-trigger {
   width: 100%;
   height: 41px;
   padding: 0 12px;
@@ -539,7 +554,49 @@ h1 {
   font-size: 14px;
   font-weight: 400;
 }
-.field input::placeholder {
+.theme-select {
+  min-width: 88px;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: #f8fafc;
+  color: #24364e;
+  font-size: 12px;
+}
+.ui-select-positioner {
+  z-index: 100;
+  outline: none;
+}
+.ui-select-content {
+  min-width: var(--anchor-width);
+  max-height: min(280px, var(--available-height));
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid #d6e0eb;
+  border-radius: 8px;
+  background: #fff;
+  color: #273950;
+  box-shadow: 0 8px 24px #1b2f4b26;
+}
+.ui-select-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  min-height: 34px;
+  padding: 7px 9px;
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 400;
+  cursor: default;
+  outline: none;
+}
+.ui-select-item[data-highlighted] {
+  background: #eaf2fe;
+}
+.ui-select-indicator {
+  display: flex;
+}
+.field .ui-input::placeholder {
   color: #98a6b8;
 }
 .dialog-actions {

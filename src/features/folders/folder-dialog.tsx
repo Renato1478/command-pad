@@ -1,6 +1,8 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import type { FormEvent } from "react";
+import { Input } from "../../components/ui/input";
+import { SelectField } from "../../components/ui/select";
 import type { Collection, Folder as FolderType } from "../../types";
 import { folderOptions } from "./queries";
 
@@ -68,9 +70,10 @@ export function FolderDialog({
           </div>
           {editor && (
             <form onSubmit={onSubmit}>
-              <label className="field">
+              <label className="field" htmlFor="folder-name">
                 Folder name
-                <input
+                <Input
+                  id="folder-name"
                   required
                   value={editor.name}
                   onChange={(event) =>
@@ -79,24 +82,20 @@ export function FolderDialog({
                   placeholder="e.g. Utils"
                 />
               </label>
-              <label className="field">
-                Location
-                <select
+              <div className="field">
+                <span>Location</span>
+                <SelectField
+                  label="Location"
                   value={editor.parentId ?? ""}
-                  onChange={(event) =>
-                    setEditor({
-                      ...editor,
-                      parentId: event.target.value || null,
-                    })
+                  onValueChange={(value) =>
+                    setEditor({ ...editor, parentId: value || null })
                   }
-                >
-                  {options.map((option) => (
-                    <option value={option.id ?? ""} key={option.id ?? "root"}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                  options={options.map((option) => ({
+                    value: option.id ?? "",
+                    label: option.label,
+                  }))}
+                />
+              </div>
               {error && (
                 <p className="dialog-error" role="alert">
                   {error}

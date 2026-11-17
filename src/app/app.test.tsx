@@ -7,6 +7,7 @@ import {
   waitFor,
   within,
 } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { afterEach, expect, test, vi } from "vitest";
 import * as transfer from "../features/collections/collection-transfer";
 import * as storage from "../storage";
@@ -227,9 +228,10 @@ test("moves a command into a folder from the editor", async () => {
   );
   fireEvent.click(screen.getByRole("button", { name: /Status.*git status/ }));
   const dialog = screen.getByRole("dialog");
-  fireEvent.change(within(dialog).getByLabelText("Folder"), {
-    target: { value: "utils" },
-  });
+  await userEvent.click(
+    within(dialog).getByRole("combobox", { name: "Folder" }),
+  );
+  await userEvent.click(await screen.findByRole("option", { name: "Utils" }));
   fireEvent.click(within(dialog).getByRole("button", { name: "Save changes" }));
   await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
   expect(save.mock.calls[0][0].commands[0].folder_id).toBe("utils");
@@ -283,9 +285,10 @@ test("creates and moves a command into a collection", async () => {
   fireEvent.change(within(dialog).getByLabelText("Command"), {
     target: { value: "git status" },
   });
-  fireEvent.change(within(dialog).getByLabelText("Collection"), {
-    target: { value: "git" },
-  });
+  await userEvent.click(
+    within(dialog).getByRole("combobox", { name: "Collection" }),
+  );
+  await userEvent.click(await screen.findByRole("option", { name: "Git" }));
   fireEvent.click(within(dialog).getByRole("button", { name: "Add command" }));
   await waitFor(() => expect(screen.queryByRole("dialog")).toBeNull());
   fireEvent.click(screen.getByRole("button", { name: "Git, 1 command" }));
@@ -431,8 +434,9 @@ test("appearance preference persists across app mounts", async () => {
   vi.spyOn(storage, "loadData").mockResolvedValue(library());
   const first = render(<App />);
   const select = screen.getByRole("combobox", { name: "Appearance" });
-  expect((select as HTMLSelectElement).value).toBe("system");
-  fireEvent.change(select, { target: { value: "dark" } });
+  expect(select.textContent).toContain("System");
+  await userEvent.click(select);
+  await userEvent.click(await screen.findByRole("option", { name: "Dark" }));
   await waitFor(() =>
     expect(document.documentElement.dataset.theme).toBe("dark"),
   );
@@ -440,12 +444,10 @@ test("appearance preference persists across app mounts", async () => {
   first.unmount();
   render(<App />);
   expect(
-    (screen.getByRole("combobox", { name: "Appearance" }) as HTMLSelectElement)
-      .value,
-  ).toBe("dark");
-  fireEvent.change(screen.getByRole("combobox", { name: "Appearance" }), {
-    target: { value: "light" },
-  });
+    screen.getByRole("combobox", { name: "Appearance" }).textContent,
+  ).toContain("Dark");
+  await userEvent.click(screen.getByRole("combobox", { name: "Appearance" }));
+  await userEvent.click(await screen.findByRole("option", { name: "Light" }));
   await waitFor(() =>
     expect(document.documentElement.dataset.theme).toBe("light"),
   );

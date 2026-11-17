@@ -1,6 +1,8 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import type { FormEvent } from "react";
+import { Input } from "../../components/ui/input";
+import { SelectField } from "../../components/ui/select";
 import type { Collection, Command, Folder } from "../../types";
 import { folderOptions } from "../folders/queries";
 
@@ -52,9 +54,10 @@ export function CommandDialog({
           </div>
           {editor && (
             <form onSubmit={onSubmit}>
-              <label className="field">
+              <label className="field" htmlFor="command-title">
                 Title
-                <input
+                <Input
+                  id="command-title"
                   required
                   value={editor.command.name}
                   onChange={(event) =>
@@ -66,9 +69,10 @@ export function CommandDialog({
                   placeholder="e.g. Git status"
                 />
               </label>
-              <label className="field">
+              <label className="field" htmlFor="command-body">
                 Command
-                <input
+                <Input
+                  id="command-body"
                   required
                   value={editor.command.body}
                   onChange={(event) =>
@@ -80,60 +84,55 @@ export function CommandDialog({
                   placeholder="e.g. git status --short --branch"
                 />
               </label>
-              <label className="field">
-                Collection
-                <select
+              <div className="field">
+                <span>Collection</span>
+                <SelectField
+                  label="Collection"
                   value={editor.command.collection_id ?? ""}
-                  onChange={(event) =>
+                  onValueChange={(value) =>
                     setEditor({
                       ...editor,
                       command: {
                         ...editor.command,
-                        collection_id: event.target.value || null,
+                        collection_id: value || null,
                         folder_id: null,
                       },
                     })
                   }
-                >
-                  <option value="">No collection</option>
-                  {collections.map((collection) => (
-                    <option value={collection.id} key={collection.id}>
-                      {collection.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="field">
-                Folder
-                <select
+                  options={[
+                    { value: "", label: "No collection" },
+                    ...collections.map((collection) => ({
+                      value: collection.id,
+                      label: collection.name,
+                    })),
+                  ]}
+                />
+              </div>
+              <div className="field">
+                <span>Folder</span>
+                <SelectField
+                  label="Folder"
                   value={editor.command.folder_id ?? ""}
                   disabled={!editor.command.collection_id}
-                  onChange={(event) =>
+                  onValueChange={(value) =>
                     setEditor({
                       ...editor,
-                      command: {
-                        ...editor.command,
-                        folder_id: event.target.value || null,
-                      },
+                      command: { ...editor.command, folder_id: value || null },
                     })
                   }
-                >
-                  {editor.command.collection_id ? (
-                    folderOptions(folders, editor.command.collection_id).map(
-                      (option) => (
-                        <option
-                          value={option.id ?? ""}
-                          key={option.id ?? "root"}
-                        >
-                          {option.label}
-                        </option>
-                      ),
-                    )
-                  ) : (
-                    <option value="">No folder</option>
-                  )}
-                </select>
-              </label>
+                  options={
+                    editor.command.collection_id
+                      ? folderOptions(
+                          folders,
+                          editor.command.collection_id,
+                        ).map((option) => ({
+                          value: option.id ?? "",
+                          label: option.label,
+                        }))
+                      : [{ value: "", label: "No folder" }]
+                  }
+                />
+              </div>
               {error && (
                 <p className="dialog-error" role="alert">
                   {error}

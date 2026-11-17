@@ -1,6 +1,7 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import type { FormEvent } from "react";
+import { Input } from "../../components/ui/input";
 
 export function CollectionDialog({
   open,
@@ -50,9 +51,10 @@ export function CollectionDialog({
             </Dialog.Close>
           </div>
           <form onSubmit={onSubmit}>
-            <label className="field">
+            <label className="field" htmlFor="collection-name">
               Collection name
-              <input
+              <Input
+                id="collection-name"
                 required
                 value={name}
                 onChange={(event) => setName(event.target.value)}
