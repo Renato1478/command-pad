@@ -9,9 +9,9 @@ import {
   Plus,
   Trash2,
 } from "lucide-react";
-import { commandsIn, foldersIn, recursiveCommandCount } from "../folders";
-import type { Command, Data, Folder as FolderType } from "../types";
-import { CommandCard } from "./CommandCard";
+import type { Command, Data, Folder as FolderType } from "../../types";
+import { CommandCard } from "../commands/command-card";
+import { commandsIn, foldersIn, recursiveCommandCount } from "./queries";
 
 type FolderActions = {
   expanded: ReadonlySet<string>;
@@ -80,7 +80,7 @@ function FolderRow({
 
   return (
     <div className={`folder ${isExpanded ? "expanded" : ""}`}>
-      <div className="folder-row">
+      <div className="folder-row hover:bg-white">
         <button
           type="button"
           className="folder-toggle"
@@ -88,11 +88,11 @@ function FolderRow({
           aria-label={`${folder.name}, ${count} ${count === 1 ? "command" : "commands"}`}
           onClick={() => onToggle(folder.id)}
         >
-          <ChevronRight
+          {/* <ChevronRight
             className={`folder-chevron ${isExpanded ? "open" : ""}`}
             size={16}
             aria-hidden="true"
-          />
+          /> */}
           {isExpanded ? (
             <FolderOpen size={18} aria-hidden="true" />
           ) : (

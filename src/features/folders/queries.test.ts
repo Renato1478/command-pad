@@ -1,4 +1,5 @@
 import { expect, test } from "vitest";
+import type { Data, Folder } from "../../types";
 import {
   commandLocation,
   commandsIn,
@@ -8,8 +9,7 @@ import {
   folderPath,
   foldersIn,
   recursiveCommandCount,
-} from "./folders";
-import type { Data, Folder } from "./types";
+} from "./queries";
 
 const folders: Folder[] = [
   { id: "utils", collection_id: "git", parent_id: null, name: "Utils" },

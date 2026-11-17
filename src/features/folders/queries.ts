@@ -1,4 +1,4 @@
-import type { Command, Data, Folder } from "./types";
+import type { Command, Data, Folder } from "../../types";
 
 export type FolderOption = { id: string | null; label: string };
 

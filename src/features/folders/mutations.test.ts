@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { addFolder, deleteFolderCascade, updateFolder } from "./library";
-import type { Data } from "./types";
+import type { Data } from "../../types";
+import { addFolder, deleteFolderCascade, updateFolder } from "./mutations";
 
 function data(): Data {
   return {

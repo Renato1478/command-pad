@@ -13,8 +13,7 @@
   color: #b3c2d6;
 }
 :root[data-theme="dark"] .icon-button,
-:root[data-theme="dark"] .favorite-button,
-:root[data-theme="dark"] .command-edit {
+:root[data-theme="dark"] .favorite-button {
   color: #b3c2d6;
 }
 :root[data-theme="dark"] .icon-button:hover,
@@ -51,14 +50,16 @@
 :root[data-theme="dark"] .dialog-description {
   color: #b0c0d5;
 }
-:root[data-theme="dark"] .command-card,
+:root[data-theme="dark"] .command-card {
+  color: #e6edf7;
+}
 :root[data-theme="dark"] .dialog {
   color: #e6edf7;
   background: #1d2939;
   border-color: #40516a;
 }
 :root[data-theme="dark"] .command-card:hover {
-  border-color: #8dbaff;
+  background: #1d2939;
 }
 :root[data-theme="dark"] .secondary-button,
 :root[data-theme="dark"] .theme-control select,
@@ -105,11 +106,9 @@
 
 :root[data-theme="dark"] .folder-row {
   color: #e6edf7;
-  background: #1d2939;
-  border-color: #40516a;
 }
 :root[data-theme="dark"] .folder-row:hover {
-  border-color: #8dbaff;
+  background: #1d2939;
 }
 :root[data-theme="dark"] .folder-toggle,
 :root[data-theme="dark"] .folder-name {

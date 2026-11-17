@@ -1,32 +1,36 @@
 import { Download, FolderPlus, Plus, Star, Terminal } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
+import { ConfirmDialog } from "../components/confirm-dialog";
+import { CollectionDialog } from "../features/collections/collection-dialog";
 import {
   exportCollection,
   importCollection,
   readCollectionFile,
   writeCollectionFile,
-} from "./collection-transfer";
-import { CollectionDialog } from "./components/CollectionDialog";
-import { CommandCard } from "./components/CommandCard";
-import type { Editor } from "./components/CommandDialog";
-import { CommandDialog } from "./components/CommandDialog";
-import { ConfirmDialog } from "./components/ConfirmDialog";
-import type { FolderEditor } from "./components/FolderDialog";
-import { FolderDialog } from "./components/FolderDialog";
-import { FolderTree } from "./components/FolderTree";
-import type { Selection } from "./components/Sidebar";
-import { Sidebar } from "./components/Sidebar";
+} from "../features/collections/collection-transfer";
+import { CommandCard } from "../features/commands/command-card";
+import type { Editor } from "../features/commands/command-dialog";
+import { CommandDialog } from "../features/commands/command-dialog";
+import type { FolderEditor } from "../features/folders/folder-dialog";
+import { FolderDialog } from "../features/folders/folder-dialog";
+import { FolderTree } from "../features/folders/folder-tree";
+import {
+  addFolder,
+  deleteFolderCascade,
+  updateFolder,
+} from "../features/folders/mutations";
 import {
   commandLocation,
   folderDeletionSummary,
   folderPath,
   sortByName,
-} from "./folders";
-import { addFolder, deleteFolderCascade, updateFolder } from "./library";
-import { loadData, saveData } from "./storage";
-import { useTheme } from "./theme";
-import type { Command, Data, Folder } from "./types";
+} from "../features/folders/queries";
+import type { Selection } from "../features/navigation/sidebar";
+import { Sidebar } from "../features/navigation/sidebar";
+import { loadData, saveData } from "../storage";
+import { useTheme } from "../style/theme";
+import type { Command, Data, Folder } from "../types";
 
 export function App() {
   const { preference, setPreference } = useTheme();

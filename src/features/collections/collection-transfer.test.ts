@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
+import { migrateData } from "../../storage";
+import type { Data } from "../../types";
 import { exportCollection, importCollection } from "./collection-transfer";
-import { migrateData } from "./storage";
-import type { Data } from "./types";
 
 function library(overrides: Partial<Data> = {}): Data {
   return { collections: [], folders: [], commands: [], ...overrides };

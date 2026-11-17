@@ -1,5 +1,5 @@
-import { descendantFolderIds } from "./folders";
-import type { Data, Folder } from "./types";
+import type { Data, Folder } from "../../types";
+import { descendantFolderIds } from "./queries";
 
 export function addFolder(data: Data, folder: Folder): Data {
   return { ...data, folders: [...data.folders, folder] };

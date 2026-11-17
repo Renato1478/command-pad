@@ -1,6 +1,6 @@
 import { FolderPlus, Monitor, Star, Terminal, Upload } from "lucide-react";
-import type { ThemePreference } from "../theme";
-import type { Data } from "../types";
+import type { ThemePreference } from "../../style/theme";
+import type { Data } from "../../types";
 
 export type Selection =
   | { kind: "favorites" }

@@ -7,9 +7,9 @@ import {
 } from "@tanstack/react-router";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { App } from "./App";
-import "./styles.css";
-import "./theme.css";
+import { App } from "./app/app";
+import "./style/styles.css";
+import "./style/theme.css";
 
 const rootRoute = createRootRoute({ component: () => <Outlet /> });
 const indexRoute = createRoute({

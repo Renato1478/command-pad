@@ -1,8 +1,8 @@
 import * as Dialog from "@radix-ui/react-dialog";
 import { X } from "lucide-react";
 import type { FormEvent } from "react";
-import { folderOptions } from "../folders";
-import type { Collection, Folder as FolderType } from "../types";
+import type { Collection, Folder as FolderType } from "../../types";
+import { folderOptions } from "./queries";
 
 export type FolderEditor = {
   mode: "create" | "edit";

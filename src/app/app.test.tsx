@@ -8,10 +8,10 @@ import {
   within,
 } from "@testing-library/react";
 import { afterEach, expect, test, vi } from "vitest";
-import { App } from "./App";
-import * as transfer from "./collection-transfer";
-import * as storage from "./storage";
-import type { Data } from "./types";
+import * as transfer from "../features/collections/collection-transfer";
+import * as storage from "../storage";
+import type { Data } from "../types";
+import { App } from "./app";
 
 function library(overrides: Partial<Data> = {}): Data {
   return {

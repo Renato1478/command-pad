@@ -1,7 +1,7 @@
 import { isTauri } from "@tauri-apps/api/core";
 import { open, save } from "@tauri-apps/plugin-dialog";
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
-import type { Collection, Command, Data, Folder } from "./types";
+import type { Collection, Command, Data, Folder } from "../../types";
 
 type FolderEntry = { id: string; parent_id: string | null; name: string };
 type CommandEntry = {
