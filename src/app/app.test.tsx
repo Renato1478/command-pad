@@ -150,7 +150,11 @@ test("creates nested folders and commands inside them", async () => {
     await screen.findByRole("button", { name: "Git, 0 commands" }),
   );
 
-  fireEvent.click(screen.getByRole("button", { name: "New folder" }));
+  fireEvent.keyDown(
+    screen.getByRole("button", { name: "Collection actions" }),
+    { key: "ArrowDown" },
+  );
+  fireEvent.click(await screen.findByRole("menuitem", { name: "New folder" }));
   let dialog = screen.getByRole("dialog");
   fireEvent.change(within(dialog).getByLabelText("Folder name"), {
     target: { value: "Utils" },
@@ -266,14 +270,14 @@ test("views, copies, cancels and saves a multiline command", async () => {
   ).toBe("echo first\n  echo second\n");
   expect(within(dialog).queryByRole("textbox")).toBeNull();
   const wrap = within(dialog).getByRole("button", { name: "Wrap lines" });
+  expect(wrap.getAttribute("aria-pressed")).toBe("true");
+  fireEvent.click(wrap);
   expect(wrap.getAttribute("aria-pressed")).toBe("false");
   fireEvent.click(wrap);
   expect(wrap.getAttribute("aria-pressed")).toBe("true");
   expect(
     within(dialog).getByRole("region", { name: "Command text" }).className,
   ).toContain("is-wrapped");
-  fireEvent.click(wrap);
-  expect(wrap.getAttribute("aria-pressed")).toBe("false");
   await user.click(
     within(dialog).getByRole("button", { name: "Copy command" }),
   );
@@ -460,15 +464,108 @@ test("export is available only for a named collection and includes folders", asy
     .mockResolvedValue();
   render(<App />);
   const git = await screen.findByRole("button", { name: "Git, 3 commands" });
-  expect(screen.queryByRole("button", { name: "Export" })).toBeNull();
+  expect(
+    screen.queryByRole("button", { name: "Collection actions" }),
+  ).toBeNull();
   fireEvent.click(git);
-  fireEvent.click(screen.getByRole("button", { name: "Export" }));
+  fireEvent.keyDown(
+    screen.getByRole("button", { name: "Collection actions" }),
+    { key: "ArrowDown" },
+  );
+  fireEvent.click(await screen.findByRole("menuitem", { name: "Export" }));
   await waitFor(() => expect(exportFile).toHaveBeenCalledTimes(1));
   expect(exportFile.mock.calls[0][0]).toBe("Git");
   const exported = JSON.parse(exportFile.mock.calls[0][1]);
   expect(exported.version).toBe(2);
   expect(exported.folders).toHaveLength(2);
   expect(exported.commands).toHaveLength(3);
+});
+
+test("confirms and deletes a collection and its contents without touching other data", async () => {
+  const data = nestedLibrary();
+  data.collections.push({ id: "other", name: "Other" });
+  data.folders.push({
+    id: "other-folder",
+    collection_id: "other",
+    parent_id: null,
+    name: "Other folder",
+  });
+  data.commands.push({
+    id: "other-command",
+    name: "Other",
+    body: "echo other",
+    collection_id: "other",
+    folder_id: "other-folder",
+    favorite: true,
+  });
+  data.commands[2].favorite = true;
+  vi.spyOn(storage, "loadData").mockResolvedValue(data);
+  const save = vi.spyOn(storage, "saveData").mockResolvedValue();
+  render(<App />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Git, 3 commands" }),
+  );
+  fireEvent.keyDown(
+    screen.getByRole("button", { name: "Collection actions" }),
+    { key: "ArrowDown" },
+  );
+  fireEvent.click(
+    await screen.findByRole("menuitem", { name: "Delete collection" }),
+  );
+  let dialog = screen.getByRole("dialog", { name: "Delete “Git”?" });
+  expect(within(dialog).getByText(/2 folders, and 3 commands/)).toBeTruthy();
+  fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  expect(save).not.toHaveBeenCalled();
+  fireEvent.keyDown(
+    screen.getByRole("button", { name: "Collection actions" }),
+    { key: "ArrowDown" },
+  );
+  fireEvent.click(
+    await screen.findByRole("menuitem", { name: "Delete collection" }),
+  );
+  dialog = screen.getByRole("dialog", { name: "Delete “Git”?" });
+  fireEvent.click(
+    within(dialog).getByRole("button", { name: "Delete collection" }),
+  );
+  await waitFor(() => expect(save).toHaveBeenCalledTimes(1));
+  expect(save.mock.calls[0][0].collections).toEqual([
+    { id: "other", name: "Other" },
+  ]);
+  expect(save.mock.calls[0][0].folders.map((folder) => folder.id)).toEqual([
+    "other-folder",
+  ]);
+  expect(save.mock.calls[0][0].commands.map((command) => command.id)).toEqual([
+    "other-command",
+  ]);
+  expect(
+    await screen.findByRole("heading", { name: "Favorites" }),
+  ).toBeTruthy();
+  expect(screen.queryByRole("button", { name: "Git, 3 commands" })).toBeNull();
+});
+
+test("keeps a collection and shows an error when deletion fails", async () => {
+  vi.spyOn(storage, "loadData").mockResolvedValue(nestedLibrary());
+  vi.spyOn(storage, "saveData").mockRejectedValue(new Error("disk full"));
+  render(<App />);
+  fireEvent.click(
+    await screen.findByRole("button", { name: "Git, 3 commands" }),
+  );
+  fireEvent.keyDown(
+    screen.getByRole("button", { name: "Collection actions" }),
+    { key: "ArrowDown" },
+  );
+  fireEvent.click(
+    await screen.findByRole("menuitem", { name: "Delete collection" }),
+  );
+  const dialog = screen.getByRole("dialog", { name: "Delete “Git”?" });
+  fireEvent.click(
+    within(dialog).getByRole("button", { name: "Delete collection" }),
+  );
+  expect((await within(dialog).findByRole("alert")).textContent).toContain(
+    "disk full",
+  );
+  fireEvent.click(within(dialog).getByRole("button", { name: "Cancel" }));
+  expect(screen.getByRole("button", { name: "Git, 3 commands" })).toBeTruthy();
 });
 
 test("a new command created from Favorites is starred", async () => {

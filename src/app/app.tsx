@@ -1,7 +1,8 @@
-import { Download, FolderPlus, Plus, Star, Terminal } from "lucide-react";
+import { Plus, Star, Terminal } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "../components/confirm-dialog";
+import { CollectionActions } from "../features/collections/collection-actions";
 import { CollectionDialog } from "../features/collections/collection-dialog";
 import {
   exportCollection,
@@ -9,6 +10,7 @@ import {
   readCollectionFile,
   writeCollectionFile,
 } from "../features/collections/collection-transfer";
+import { deleteCollectionCascade } from "../features/collections/mutations";
 import { CommandCard } from "../features/commands/command-card";
 import type { Editor } from "../features/commands/command-dialog";
 import { CommandDialog } from "../features/commands/command-dialog";
@@ -30,7 +32,7 @@ import type { Selection } from "../features/navigation/sidebar";
 import { Sidebar } from "../features/navigation/sidebar";
 import { loadData, saveData } from "../storage";
 import { useTheme } from "../style/theme";
-import type { Command, Data, Folder } from "../types";
+import type { Collection, Command, Data, Folder } from "../types";
 
 export function App() {
   const { preference, setPreference } = useTheme();
@@ -40,6 +42,8 @@ export function App() {
   const [editor, setEditor] = useState<Editor | null>(null);
   const [collectionOpen, setCollectionOpen] = useState(false);
   const [collectionName, setCollectionName] = useState("");
+  const [collectionToDelete, setCollectionToDelete] =
+    useState<Collection | null>(null);
   const [folderEditor, setFolderEditor] = useState<FolderEditor | null>(null);
   const [folderToDelete, setFolderToDelete] = useState<Folder | null>(null);
   const [error, setError] = useState("");
@@ -217,6 +221,22 @@ export function App() {
     }
   }
 
+  async function deleteCollection() {
+    if (!collectionToDelete || !data) return;
+    const folderIds = new Set(
+      data.folders
+        .filter((folder) => folder.collection_id === collectionToDelete.id)
+        .map((folder) => folder.id),
+    );
+    if (await persist(deleteCollectionCascade(data, collectionToDelete.id))) {
+      setCollectionToDelete(null);
+      setSelection({ kind: "favorites" });
+      setExpanded(
+        (previous) => new Set([...previous].filter((id) => !folderIds.has(id))),
+      );
+    }
+  }
+
   async function submitCommand(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (
@@ -336,6 +356,14 @@ export function App() {
         }`
       : null,
   ].filter(Boolean);
+  const collectionDeletionFolders =
+    data?.folders.filter(
+      (folder) => folder.collection_id === collectionToDelete?.id,
+    ).length ?? 0;
+  const collectionDeletionCommands =
+    data?.commands.filter(
+      (command) => command.collection_id === collectionToDelete?.id,
+    ).length ?? 0;
 
   return (
     <div className="flex min-h-screen">
@@ -352,7 +380,6 @@ export function App() {
       <main className="main">
         <header className="main-header">
           <div>
-            <div className="eyebrow">COMMAND LIBRARY</div>
             <h1>{title}</h1>
             <p className="subtitle">
               {commandCount} {commandCount === 1 ? "command" : "commands"}
@@ -367,24 +394,15 @@ export function App() {
           </div>
           <div className="header-actions">
             {selectedCollection && (
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={handleExport}
+              <CollectionActions
+                onNewFolder={() => openNewFolder(null)}
+                onExport={handleExport}
+                onDelete={() => {
+                  setError("");
+                  setCollectionToDelete(selectedCollection);
+                }}
                 disabled={!data || saving}
-              >
-                <Download size={16} /> Export
-              </button>
-            )}
-            {canManageFolders && (
-              <button
-                type="button"
-                className="secondary-button"
-                disabled={!data || saving}
-                onClick={() => openNewFolder(null)}
-              >
-                <FolderPlus size={16} /> New folder
-              </button>
+              />
             )}
             <button
               type="button"
@@ -493,6 +511,16 @@ export function App() {
         saving={saving}
         error={error}
         onSubmit={submitFolder}
+      />
+      <ConfirmDialog
+        open={!!collectionToDelete}
+        title={`Delete “${collectionToDelete?.name ?? "collection"}”?`}
+        description={`This permanently deletes the collection, ${collectionDeletionFolders} ${collectionDeletionFolders === 1 ? "folder" : "folders"}, and ${collectionDeletionCommands} ${collectionDeletionCommands === 1 ? "command" : "commands"}. This cannot be undone.`}
+        confirmLabel="Delete collection"
+        onConfirm={deleteCollection}
+        onClose={() => setCollectionToDelete(null)}
+        busy={saving}
+        error={error}
       />
       <ConfirmDialog
         open={!!folderToDelete}

@@ -63,6 +63,18 @@ select:focus-visible {
   align-items: center;
   gap: 8px;
 }
+.secondary-button.collection-actions-trigger {
+  min-width: 42px;
+  padding: 0;
+}
+:root:not([data-theme="dark"]) .collection-actions-trigger {
+  border: 0;
+  background: #e0e7f1;
+  color: #273950;
+}
+:root:not([data-theme="dark"]) .collection-actions-trigger:hover {
+  background: #d2deec;
+}
 .favorites-link {
   width: 100%;
 }

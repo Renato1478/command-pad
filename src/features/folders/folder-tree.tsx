@@ -152,7 +152,7 @@ function FolderRow({
       {isExpanded && (
         <div className="folder-children">
           {isEmpty ? (
-            <div className="folder-empty">
+            <div className="mt-1.5 folder-empty">
               <span>Empty folder</span>
               <div>
                 <button
