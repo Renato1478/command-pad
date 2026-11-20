@@ -1,6 +1,7 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { Copy, Maximize2, Minus, Terminal, X } from "lucide-react";
+import { Copy, Maximize2, Minus, X } from "lucide-react";
 import { useEffect, useState } from "react";
+import logo from "../assets/termemo.svg";
 
 const inTauri = "__TAURI_INTERNALS__" in globalThis;
 const onMac = /Macintosh|Mac OS X/.test(navigator.userAgent);
@@ -36,9 +37,7 @@ export function TitleBar() {
       data-tauri-drag-region
     >
       <div className="title-bar-brand" data-tauri-drag-region>
-        <span className="title-bar-mark">
-          <Terminal size={13} />
-        </span>
+        <img className="title-bar-logo" src={logo} alt="" />
         <span className="title-bar-name">Termemo</span>
       </div>
       <div className="title-bar-drag" data-tauri-drag-region />

@@ -67,14 +67,9 @@ select:focus-visible {
 .title-bar-brand > * {
   pointer-events: none;
 }
-.title-bar-mark {
-  display: grid;
-  place-items: center;
-  width: 20px;
-  height: 20px;
-  border-radius: 5px;
-  background: #dfe8f4;
-  color: #3a5b89;
+.title-bar-logo {
+  width: 21px;
+  height: 21px;
 }
 .title-bar-name {
   white-space: nowrap;

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>CmdPad</title>
+  <desc>A notepad with a terminal prompt and a blue folded corner.</desc>
+  <path d="M137 48H328L426 146V410C426 440 403 464 373 464H139C109 464 86 440 86 410V102C86 72 109 48 137 48Z" fill="#fafbfe" stroke="#dce5f0" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M328 48V117C328 133 341 146 357 146H426Z" fill="#73b9f5"/>
+  <path d="M149 179L238 231L149 283" fill="none" stroke="#071b4a" stroke-width="27" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M264 294H360" fill="none" stroke="#071b4a" stroke-width="27" stroke-linecap="round"/>
+  <path d="M149 367H360" fill="none" stroke="#51adf0" stroke-width="23" stroke-linecap="round"/>
+</svg>

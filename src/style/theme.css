@@ -14,10 +14,6 @@
 :root[data-theme="dark"] .title-bar-brand {
   color: #b3c2d6;
 }
-:root[data-theme="dark"] .title-bar-mark {
-  background: #2b3a4e;
-  color: #9fc4f5;
-}
 :root[data-theme="dark"] .window-control {
   color: #b3c2d6;
 }
