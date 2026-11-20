@@ -2,6 +2,7 @@ import { Plus, Star, Terminal } from "lucide-react";
 import type { FormEvent } from "react";
 import { useEffect, useRef, useState } from "react";
 import { ConfirmDialog } from "../components/confirm-dialog";
+import { TitleBar } from "../components/title-bar";
 import { CollectionActions } from "../features/collections/collection-actions";
 import { CollectionDialog } from "../features/collections/collection-dialog";
 import {
@@ -586,140 +587,143 @@ export function App() {
     ).length ?? 0;
 
   return (
-    <div className="flex min-h-screen">
-      <Sidebar
-        data={data}
-        selection={selection}
-        onSelect={setSelection}
-        onCreate={() => setCollectionOpen(true)}
-        onImport={handleImport}
-        theme={preference}
-        onThemeChange={setPreference}
-        busy={saving}
-        workspaces={[
-          { id: DEFAULT_WORKSPACE_ID, name: "Default" },
-          ...workspaceRecords,
-        ]}
-        activeWorkspaceId={activeWorkspaceId}
-        onWorkspaceChange={(id) => void switchWorkspace(id)}
-        onNewWorkspace={() => {
-          setWorkspaceError("");
-          setWorkspaceDialogOpen(true);
-        }}
-        onRenameWorkspace={() => {
-          if (!activeWorkspace) return;
-          setRenameName(activeWorkspace.name);
-          setRenameError("");
-          setRenameDialogOpen(true);
-        }}
-        onDeleteWorkspace={() => {
-          if (!activeWorkspace) return;
-          setWorkspaceToDelete(activeWorkspace);
-        }}
-      />
-      <main className="main">
-        <header className="main-header">
-          <div>
-            <h1>{title}</h1>
-            <p className="subtitle">
-              {commandCount} {commandCount === 1 ? "command" : "commands"}
-              {canManageFolders && (
-                <>
-                  {" · "}
-                  {collectionFolders.length}{" "}
-                  {collectionFolders.length === 1 ? "folder" : "folders"}
-                </>
-              )}
-            </p>
-          </div>
-          <div className="header-actions">
-            {selectedCollection && (
-              <CollectionActions
-                onNewFolder={() => openNewFolder(null)}
-                onExport={handleExport}
-                onDelete={() => {
-                  setError("");
-                  setCollectionToDelete(selectedCollection);
-                }}
-                disabled={!data || saving}
-              />
-            )}
-            <button
-              type="button"
-              className="primary-button"
-              disabled={!data || saving}
-              onClick={() => openNewCommand()}
-            >
-              <Plus size={19} /> New command
-            </button>
-          </div>
-        </header>
-        {error && (
-          <div className="error" role="alert">
-            {error}
-          </div>
-        )}
-        {!data && !error && (
-          <p className="state-message">Loading your commands…</p>
-        )}
-        {data && isEmpty && (
-          <div className="empty-state">
-            <div className="empty-icon">
-              {favorites ? <Star size={23} /> : <Terminal size={23} />}
+    <div className="app">
+      <TitleBar workspace={activeWorkspace?.name ?? "Default"} />
+      <div className="app-shell">
+        <Sidebar
+          data={data}
+          selection={selection}
+          onSelect={setSelection}
+          onCreate={() => setCollectionOpen(true)}
+          onImport={handleImport}
+          theme={preference}
+          onThemeChange={setPreference}
+          busy={saving}
+          workspaces={[
+            { id: DEFAULT_WORKSPACE_ID, name: "Default" },
+            ...workspaceRecords,
+          ]}
+          activeWorkspaceId={activeWorkspaceId}
+          onWorkspaceChange={(id) => void switchWorkspace(id)}
+          onNewWorkspace={() => {
+            setWorkspaceError("");
+            setWorkspaceDialogOpen(true);
+          }}
+          onRenameWorkspace={() => {
+            if (!activeWorkspace) return;
+            setRenameName(activeWorkspace.name);
+            setRenameError("");
+            setRenameDialogOpen(true);
+          }}
+          onDeleteWorkspace={() => {
+            if (!activeWorkspace) return;
+            setWorkspaceToDelete(activeWorkspace);
+          }}
+        />
+        <main className="main">
+          <header className="main-header">
+            <div>
+              <h1>{title}</h1>
+              <p className="subtitle">
+                {commandCount} {commandCount === 1 ? "command" : "commands"}
+                {canManageFolders && (
+                  <>
+                    {" · "}
+                    {collectionFolders.length}{" "}
+                    {collectionFolders.length === 1 ? "folder" : "folders"}
+                  </>
+                )}
+              </p>
             </div>
-            <h2>{favorites ? "No favorites yet" : "No commands yet"}</h2>
-            <p>
-              {favorites
-                ? "Star a command to find it here."
-                : canManageFolders
-                  ? "Add a command or create a folder to get started."
-                  : "Add a command to get started."}
-            </p>
-            {!favorites && (
+            <div className="header-actions">
+              {selectedCollection && (
+                <CollectionActions
+                  onNewFolder={() => openNewFolder(null)}
+                  onExport={handleExport}
+                  onDelete={() => {
+                    setError("");
+                    setCollectionToDelete(selectedCollection);
+                  }}
+                  disabled={!data || saving}
+                />
+              )}
               <button
                 type="button"
-                className="text-action"
-                disabled={saving}
+                className="primary-button"
+                disabled={!data || saving}
                 onClick={() => openNewCommand()}
               >
-                <Plus size={16} /> Add a command
+                <Plus size={19} /> New command
               </button>
-            )}
-          </div>
-        )}
-        {data && !isEmpty && (
-          <div className="command-list">
-            {favorites || !activeCollectionId ? (
-              flatCommands.map((command) => (
-                <CommandCard
-                  key={command.id}
-                  command={command}
-                  onEdit={() => setEditor({ mode: "view", command })}
-                  onToggleFavorite={() => toggleFavorite(command)}
+            </div>
+          </header>
+          {error && (
+            <div className="error" role="alert">
+              {error}
+            </div>
+          )}
+          {!data && !error && (
+            <p className="state-message">Loading your commands…</p>
+          )}
+          {data && isEmpty && (
+            <div className="empty-state">
+              <div className="empty-icon">
+                {favorites ? <Star size={23} /> : <Terminal size={23} />}
+              </div>
+              <h2>{favorites ? "No favorites yet" : "No commands yet"}</h2>
+              <p>
+                {favorites
+                  ? "Star a command to find it here."
+                  : canManageFolders
+                    ? "Add a command or create a folder to get started."
+                    : "Add a command to get started."}
+              </p>
+              {!favorites && (
+                <button
+                  type="button"
+                  className="text-action"
+                  disabled={saving}
+                  onClick={() => openNewCommand()}
+                >
+                  <Plus size={16} /> Add a command
+                </button>
+              )}
+            </div>
+          )}
+          {data && !isEmpty && (
+            <div className="command-list">
+              {favorites || !activeCollectionId ? (
+                flatCommands.map((command) => (
+                  <CommandCard
+                    key={command.id}
+                    command={command}
+                    onEdit={() => setEditor({ mode: "view", command })}
+                    onToggleFavorite={() => toggleFavorite(command)}
+                    busy={saving}
+                  />
+                ))
+              ) : (
+                <FolderTree
+                  data={data}
+                  collectionId={activeCollectionId}
+                  parentId={null}
+                  expanded={expanded}
+                  onToggle={toggleFolder}
+                  onEditCommand={(command) =>
+                    setEditor({ mode: "view", command })
+                  }
+                  onToggleFavorite={toggleFavorite}
+                  onAddCommand={(folderId) => openNewCommand(folderId)}
+                  onAddFolder={(folderId) => openNewFolder(folderId)}
+                  onEditFolder={editFolder}
+                  onDeleteFolder={setFolderToDelete}
                   busy={saving}
                 />
-              ))
-            ) : (
-              <FolderTree
-                data={data}
-                collectionId={activeCollectionId}
-                parentId={null}
-                expanded={expanded}
-                onToggle={toggleFolder}
-                onEditCommand={(command) =>
-                  setEditor({ mode: "view", command })
-                }
-                onToggleFavorite={toggleFavorite}
-                onAddCommand={(folderId) => openNewCommand(folderId)}
-                onAddFolder={(folderId) => openNewFolder(folderId)}
-                onEditFolder={editFolder}
-                onDeleteFolder={setFolderToDelete}
-                busy={saving}
-              />
-            )}
-          </div>
-        )}
-      </main>
+              )}
+            </div>
+          )}
+        </main>
+      </div>
       <CommandDialog
         editor={editor}
         setEditor={setEditor}

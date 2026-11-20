@@ -3,6 +3,39 @@
   background: #101722;
 }
 
+:root[data-theme="dark"] .title-bar {
+  background: linear-gradient(
+    to right,
+    #182231 0 225px,
+    #344256 225px 226px,
+    #101722 226px
+  );
+}
+:root[data-theme="dark"] .title-bar-brand {
+  color: #b3c2d6;
+}
+:root[data-theme="dark"] .title-bar-mark {
+  background: #2b3a4e;
+  color: #9fc4f5;
+}
+:root[data-theme="dark"] .title-bar-separator {
+  background: #40516a;
+}
+:root[data-theme="dark"] .title-bar-workspace {
+  color: #93a5bc;
+}
+:root[data-theme="dark"] .window-control {
+  color: #b3c2d6;
+}
+:root[data-theme="dark"] .window-control:hover {
+  background: #2b3a4e;
+  color: #e6edf7;
+}
+:root[data-theme="dark"] .window-control.window-close:hover {
+  background: #e81123;
+  color: #fff;
+}
+
 :root[data-theme="dark"] .sidebar {
   background: #182231;
   border-color: #344256;
