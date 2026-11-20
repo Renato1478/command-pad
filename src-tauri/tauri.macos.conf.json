@@ -3,7 +3,7 @@
   "app": {
     "windows": [
       {
-        "title": "Command Pad",
+        "title": "Termemo",
         "width": 980,
         "height": 680,
         "minWidth": 640,

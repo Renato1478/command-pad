@@ -97,7 +97,7 @@ pub fn run() {
             workspace::commands::validate_workspace_name,
         ])
         .run(tauri::generate_context!())
-        .expect("error while running Command Pad");
+        .expect("error while running Termemo");
 }
 
 #[cfg(test)]

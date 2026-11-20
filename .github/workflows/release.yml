@@ -20,7 +20,7 @@ jobs:
           TAG: ${{ github.ref_name }}
         run: |
           if ! gh release view "$TAG" > /dev/null 2>&1; then
-            gh release create "$TAG" --verify-tag --title "Command Pad $TAG" \
+            gh release create "$TAG" --verify-tag --title "Termemo $TAG" \
               --notes "Desktop builds for Linux, macOS, and Windows. Assets are uploaded as builds complete. These builds are unsigned. Commands are stored locally and are not executed."
           fi
 
@@ -73,7 +73,7 @@ jobs:
           APPLE_SIGNING_IDENTITY: ${{ matrix.runner == 'macos-latest' && '-' || '' }}
         with:
           tagName: ${{ github.ref_name }}
-          releaseName: Command Pad ${{ github.ref_name }}
+          releaseName: Termemo ${{ github.ref_name }}
           releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

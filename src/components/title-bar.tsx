@@ -39,7 +39,7 @@ export function TitleBar() {
         <span className="title-bar-mark">
           <Terminal size={13} />
         </span>
-        <span className="title-bar-name">Command Pad</span>
+        <span className="title-bar-name">Termemo</span>
       </div>
       <div className="title-bar-drag" data-tauri-drag-region />
       {appWindow && !onMac && (

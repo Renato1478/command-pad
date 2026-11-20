@@ -1,10 +1,10 @@
 [package]
-name = "cmd-pad"
+name = "termemo"
 version = "0.2.0"
 edition = "2021"
 
 [lib]
-name = "cmd_pad_lib"
+name = "termemo_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

@@ -92,7 +92,7 @@ for name in ("src-tauri/Cargo.toml", "src-tauri/Cargo.lock", "src-tauri/tauri.co
         text, count = re.subn(r'(?m)^version = "[^"]+"$', f'version = "{version}"', text, count=1)
     elif name.endswith("Cargo.lock"):
         text, count = re.subn(
-            r'(?m)^(name = "cmd-pad"\n)version = "[^"]+"$',
+            r'(?m)^(name = "termemo"\n)version = "[^"]+"$',
             rf'\g<1>version = "{version}"',
             text,
             count=1,
@@ -115,7 +115,7 @@ Next steps:
   git add package.json package-lock.json src-tauri/Cargo.toml src-tauri/Cargo.lock src-tauri/tauri.conf.json
   git commit -m "chore: bump version to $next"
   git push
-  git tag -a v$next -m "Command Pad v$next"
+  git tag -a v$next -m "Termemo v$next"
   git push origin v$next
 
 Pushing the tag starts the release workflow.
