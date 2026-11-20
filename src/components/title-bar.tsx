@@ -6,7 +6,7 @@ const inTauri = "__TAURI_INTERNALS__" in globalThis;
 const onMac = /Macintosh|Mac OS X/.test(navigator.userAgent);
 const appWindow = inTauri ? getCurrentWindow() : null;
 
-export function TitleBar({ workspace }: { workspace: string }) {
+export function TitleBar() {
   const [maximized, setMaximized] = useState(false);
 
   useEffect(() => {
@@ -40,8 +40,6 @@ export function TitleBar({ workspace }: { workspace: string }) {
           <Terminal size={13} />
         </span>
         <span className="title-bar-name">Command Pad</span>
-        <span className="title-bar-separator" />
-        <span className="title-bar-workspace">{workspace}</span>
       </div>
       <div className="title-bar-drag" data-tauri-drag-region />
       {appWindow && !onMac && (

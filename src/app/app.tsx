@@ -588,7 +588,7 @@ export function App() {
 
   return (
     <div className="app">
-      <TitleBar workspace={activeWorkspace?.name ?? "Default"} />
+      <TitleBar />
       <div className="app-shell">
         <Sidebar
           data={data}

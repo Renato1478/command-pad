@@ -5,7 +5,6 @@ import {
   Pencil,
   Plus,
   Star,
-  Terminal,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -191,10 +190,6 @@ export function Sidebar({
               { value: "dark", label: "Dark" },
             ]}
           />
-        </div>
-        <div className="sidebar-footer">
-          <Terminal size={15} />
-          <span>YOUR COMMAND LIBRARY</span>
         </div>
       </div>
     </aside>
