@@ -322,6 +322,7 @@ mod tests {
 }
 
 pub mod commands;
+pub mod default;
 pub mod mutations;
 pub mod paths;
 pub mod revision;
@@ -339,6 +340,30 @@ mod mutation_tests {
         let path = std::env::temp_dir().join(format!("cmdpad-{}-{suffix}", std::process::id()));
         fs::create_dir(&path).unwrap();
         path
+    }
+
+    #[test]
+    fn keeps_unfiled_commands_and_the_unfiled_directory() {
+        let root = temp_dir();
+        create_workspace(&root, "id", "Team").unwrap();
+        let draft = mutations::CommandDraft {
+            id: "loose".into(),
+            name: "Loose".into(),
+            body: "echo hi\n".into(),
+            favorite: false,
+            collection_id: None,
+            folder_id: None,
+        };
+        mutations::add_command(&root, &draft).unwrap();
+        assert!(root.join("unfiled/Loose.cmd.md").is_file());
+        assert_eq!(read_workspace(&root).unwrap().commands[0].name, "Loose");
+
+        let revisions = revision::collect(&root).unwrap();
+        let revision = revisions.0.get("loose").unwrap();
+        mutations::delete_command(&root, &revision.path, &revision.fingerprint).unwrap();
+        assert!(root.join("unfiled").is_dir());
+        assert!(read_workspace(&root).unwrap().commands.is_empty());
+        fs::remove_dir_all(root).unwrap();
     }
 
     #[test]

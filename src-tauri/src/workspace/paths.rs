@@ -99,10 +99,3 @@ fn find_deep(directory: &Path, id: &str) -> Result<Option<PathBuf>, String> {
     }
     Ok(None)
 }
-
-pub fn remove_parent_if_empty(command_path: &Path) -> std::io::Result<()> {
-    if let Some(parent) = command_path.parent() {
-        let _ = fs::remove_dir(parent);
-    }
-    Ok(())
-}

@@ -5,7 +5,7 @@
 
 use crate::{
     workspace::{
-        create_workspace, mutations, open_workspace, paths, read_workspace,
+        create_workspace, default, mutations, open_workspace, paths, read_workspace,
         revision::{self, CommandRevisions},
     },
     Data,
@@ -19,6 +19,19 @@ pub struct WorkspaceSnapshot {
     pub manifest: crate::workspace::WorkspaceManifest,
     pub data: Data,
     pub path: String,
+}
+
+/// Creates or opens the Default workspace and migrates the old JSON library.
+#[tauri::command]
+pub fn ensure_default_workspace(app: tauri::AppHandle) -> Result<default::WorkspaceHandle, String> {
+    let data_dir = app
+        .path()
+        .app_data_dir()
+        .map_err(|error| error.to_string())?;
+    default::ensure_default_workspace(
+        &data_dir.join("default-workspace"),
+        &data_dir.join("command_pad.json"),
+    )
 }
 
 /// Creates a workspace inside the app's own data directory.

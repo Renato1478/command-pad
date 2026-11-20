@@ -1,5 +1,6 @@
 import { invoke, isTauri } from "@tauri-apps/api/core";
 import { open } from "@tauri-apps/plugin-dialog";
+import { loadData, saveData } from "./storage";
 import type { Command, Data, Folder } from "./types";
 
 const WORKSPACES_KEY = "command-pad-workspaces";
@@ -74,6 +75,13 @@ export async function chooseWorkspaceDirectory(): Promise<string | null> {
   return typeof path === "string" ? path : null;
 }
 
+export async function ensureDefaultWorkspace(): Promise<WorkspaceRecord> {
+  if (!isTauri()) {
+    return { id: DEFAULT_WORKSPACE_ID, name: "Default", path: "browser" };
+  }
+  return invoke<WorkspaceRecord>("ensure_default_workspace");
+}
+
 export async function createLocalWorkspace(
   name: string,
 ): Promise<WorkspaceRecord> {
@@ -130,12 +138,14 @@ export async function renameWorkspace(
 }
 
 export async function readWorkspace(path: string): Promise<Data> {
+  if (!isTauri()) return loadData();
   return invoke<Data>("load_workspace", { path });
 }
 
 export async function workspaceRevisions(
   path: string,
 ): Promise<CommandRevisions> {
+  if (!isTauri()) return {};
   return invoke<CommandRevisions>("workspace_revisions", { path });
 }
 
@@ -145,6 +155,7 @@ export async function saveWorkspace(
   next: Data,
   revisions: CommandRevisions,
 ): Promise<void> {
+  if (!isTauri()) return saveData(next);
   const previousCollections = new Map(
     previous.collections.map((item) => [item.id, item]),
   );

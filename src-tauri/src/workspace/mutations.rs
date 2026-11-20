@@ -123,15 +123,22 @@ pub fn delete_folder(root: &Path, collection_id: &str, id: &str) -> Result<(), S
 }
 
 fn command_path(root: &Path, draft: &CommandDraft) -> Result<PathBuf, String> {
-    let collection_id = draft
-        .collection_id
-        .as_deref()
-        .ok_or("A command must be in a collection")?;
-    let parent = match draft.folder_id.as_deref() {
-        Some(folder_id) => paths::folder(root, collection_id, folder_id)?,
-        None => paths::collection(root, collection_id)?,
+    let parent = match draft.collection_id.as_deref() {
+        Some(collection_id) => match draft.folder_id.as_deref() {
+            Some(folder_id) => paths::folder(root, collection_id, folder_id)?,
+            None => paths::collection(root, collection_id)?,
+        },
+        None => root.join("unfiled"),
     };
     Ok(parent.join(format!("{}.cmd.md", draft.name.trim())))
+}
+
+fn remove_empty_parent(root: &Path, path: &Path) {
+    if let Some(parent) = path.parent() {
+        if parent != root.join("unfiled") {
+            let _ = fs::remove_dir(parent);
+        }
+    }
 }
 
 pub fn add_command(root: &Path, draft: &CommandDraft) -> Result<(), String> {
@@ -175,7 +182,7 @@ pub fn update_command(
         fs::remove_file(&previous).map_err(|error| {
             format!("Command moved, but the old file could not be removed: {error}")
         })?;
-        let _ = paths::remove_parent_if_empty(&previous);
+        remove_empty_parent(root, &previous);
     }
     Ok(())
 }
@@ -184,7 +191,7 @@ pub fn delete_command(root: &Path, old_path: &str, expected_revision: &str) -> R
     revision::path_matches(root, old_path, expected_revision)?;
     let path = root.join(old_path);
     fs::remove_file(&path).map_err(|error| format!("Cannot delete command: {error}"))?;
-    let _ = paths::remove_parent_if_empty(&path);
+    remove_empty_parent(root, &path);
     Ok(())
 }
 

@@ -4,6 +4,7 @@ import { invoke } from "@tauri-apps/api/core";
 import { beforeEach, expect, test, vi } from "vitest";
 import type { Data } from "./types";
 import {
+  ensureDefaultWorkspace,
   loadWorkspaceRecords,
   rememberWorkspace,
   removeWorkspaceRecord,
@@ -141,4 +142,49 @@ test("does not write unchanged data and refuses missing revisions", async () => 
     saveWorkspace("/mnt/team", withCommand, data, {}),
   ).rejects.toThrow("revision");
   expect(invokeMock).not.toHaveBeenCalled();
+});
+
+test("asks Rust for the Default workspace", async () => {
+  invokeMock.mockResolvedValueOnce({
+    id: "default",
+    name: "Default",
+    path: "/data/default-workspace",
+  });
+  expect(await ensureDefaultWorkspace()).toEqual({
+    id: "default",
+    name: "Default",
+    path: "/data/default-workspace",
+  });
+  expect(invokeMock).toHaveBeenCalledWith("ensure_default_workspace");
+});
+
+test("adds commands without a collection to unfiled", async () => {
+  await saveWorkspace(
+    "/data/default-workspace",
+    library(),
+    library({
+      commands: [
+        {
+          id: "loose",
+          name: "Loose",
+          body: "echo hi",
+          collection_id: null,
+          folder_id: null,
+          favorite: false,
+        },
+      ],
+    }),
+    {},
+  );
+  expect(invokeMock).toHaveBeenCalledWith("add_workspace_command", {
+    path: "/data/default-workspace",
+    draft: {
+      id: "loose",
+      name: "Loose",
+      body: "echo hi",
+      favorite: false,
+      collectionId: null,
+      folderId: null,
+    },
+  });
 });

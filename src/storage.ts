@@ -1,4 +1,3 @@
-import { invoke, isTauri } from "@tauri-apps/api/core";
 import type { Collection, Data, Folder } from "./types";
 
 const key = "command-pad-data";
@@ -124,7 +123,6 @@ export function migrateData(value: unknown): Data {
 }
 
 export async function loadData(): Promise<Data> {
-  if (isTauri()) return migrateData(await invoke("load_data"));
   const saved = localStorage.getItem(key);
   return saved
     ? migrateData(JSON.parse(saved))
@@ -132,6 +130,5 @@ export async function loadData(): Promise<Data> {
 }
 
 export async function saveData(data: Data): Promise<void> {
-  if (isTauri()) return invoke("save_data", { data });
   localStorage.setItem(key, JSON.stringify(data));
 }

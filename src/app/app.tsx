@@ -35,7 +35,6 @@ import {
   RenameWorkspaceDialog,
   WorkspaceDialog,
 } from "../features/workspaces/workspace-dialog";
-import { loadData, saveData } from "../storage";
 import { useTheme } from "../style/theme";
 import type { Collection, Command, Data, Folder } from "../types";
 import type { CommandRevisions, WorkspaceRecord } from "../workspace-storage";
@@ -44,6 +43,7 @@ import {
   createLocalWorkspace,
   createWorkspace,
   DEFAULT_WORKSPACE_ID,
+  ensureDefaultWorkspace,
   loadWorkspaceRecords,
   openWorkspace,
   readWorkspace,
@@ -72,6 +72,8 @@ export function App() {
   const [workspaceRecords, setWorkspaceRecords] = useState<WorkspaceRecord[]>(
     () => loadWorkspaceRecords(),
   );
+  const [defaultWorkspace, setDefaultWorkspace] =
+    useState<WorkspaceRecord | null>(null);
   const [activeWorkspaceId, setActiveWorkspaceId] = useState<string>(
     () =>
       localStorage.getItem("command-pad-active-workspace") ??
@@ -90,31 +92,48 @@ export function App() {
   const revisionsRef = useRef<CommandRevisions>({});
   const activeWorkspace =
     activeWorkspaceId === DEFAULT_WORKSPACE_ID
-      ? null
+      ? defaultWorkspace
       : workspaceRecords.find((item) => item.id === activeWorkspaceId);
+
+  useEffect(() => {
+    let active = true;
+    ensureDefaultWorkspace().then(
+      (record) => {
+        if (active) setDefaultWorkspace(record);
+      },
+      (reason: unknown) => {
+        if (active) {
+          setError(`Could not open the Default workspace: ${String(reason)}`);
+          setData(null);
+        }
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
     const record =
       activeWorkspaceId === DEFAULT_WORKSPACE_ID
-        ? null
+        ? defaultWorkspace
         : loadWorkspaceRecords().find((item) => item.id === activeWorkspaceId);
-    if (activeWorkspaceId !== DEFAULT_WORKSPACE_ID && !record) {
-      // The remembered workspace was removed from this device.
-      localStorage.setItem(
-        "command-pad-active-workspace",
-        DEFAULT_WORKSPACE_ID,
-      );
-      setActiveWorkspaceId(DEFAULT_WORKSPACE_ID);
+    if (!record) {
+      if (activeWorkspaceId !== DEFAULT_WORKSPACE_ID) {
+        // The remembered workspace was removed from this device.
+        localStorage.setItem(
+          "command-pad-active-workspace",
+          DEFAULT_WORKSPACE_ID,
+        );
+        setActiveWorkspaceId(DEFAULT_WORKSPACE_ID);
+      }
       return;
     }
-    const load = record
-      ? Promise.all([
-          readWorkspace(record.path),
-          workspaceRevisions(record.path),
-        ])
-      : loadData().then((loaded) => [loaded, {}] as const);
-    load.then(
+    Promise.all([
+      readWorkspace(record.path),
+      workspaceRevisions(record.path),
+    ]).then(
       ([loaded, revisions]) => {
         if (active) {
           dataRef.current = loaded;
@@ -132,7 +151,7 @@ export function App() {
     return () => {
       active = false;
     };
-  }, [activeWorkspaceId]);
+  }, [activeWorkspaceId, defaultWorkspace]);
 
   const workspacePath = activeWorkspace?.path;
 
@@ -177,18 +196,14 @@ export function App() {
     setError("");
     try {
       const previous = dataRef.current;
-      if (activeWorkspace) {
-        if (!previous) return false;
-        await saveWorkspace(
-          activeWorkspace.path,
-          previous,
-          next,
-          revisionsRef.current,
-        );
-        revisionsRef.current = await workspaceRevisions(activeWorkspace.path);
-      } else {
-        await saveData(next);
-      }
+      if (!activeWorkspace || !previous) return false;
+      await saveWorkspace(
+        activeWorkspace.path,
+        previous,
+        next,
+        revisionsRef.current,
+      );
+      revisionsRef.current = await workspaceRevisions(activeWorkspace.path);
       dataRef.current = next;
       setData(next);
       return true;
@@ -212,8 +227,12 @@ export function App() {
 
   async function switchWorkspace(id: string) {
     if (id === activeWorkspaceId) return;
-    const record = workspaceRecords.find((item) => item.id === id);
-    if (id !== DEFAULT_WORKSPACE_ID && !record) return;
+    const record =
+      id === DEFAULT_WORKSPACE_ID
+        ? defaultWorkspace
+        : (workspaceRecords.find((item) => item.id === id) ??
+          loadWorkspaceRecords().find((item) => item.id === id));
+    if (!record) return;
     setError("");
     setData(null);
     revisionsRef.current = {};
@@ -600,7 +619,10 @@ export function App() {
           onThemeChange={setPreference}
           busy={saving}
           workspaces={[
-            { id: DEFAULT_WORKSPACE_ID, name: "Default" },
+            {
+              id: DEFAULT_WORKSPACE_ID,
+              name: defaultWorkspace?.name ?? "Default",
+            },
             ...workspaceRecords,
           ]}
           activeWorkspaceId={activeWorkspaceId}
